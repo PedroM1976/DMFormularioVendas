@@ -13,7 +13,7 @@
 <div class="wrap">
   <div class="top">
     <h1>Inserção Rápida de Vendas</h1>
-    <div>Escolhe o cliente e o artigo, confirma os valores e guarda. Descarrega o Excel apenas no fim.</div>
+    <div>Escolhe o cliente e o artigo, confirma os valores e guarda. A Semana é opcional e editável. Descarrega o Excel apenas no fim.</div>
     <div class="bar" style="margin-top:14px">
       <input id="file" type="file" accept=".xlsx" />
       <button class="btn secondary" id="clear">Limpar formulário</button>
@@ -39,6 +39,7 @@
       <span class="muted" id="recordPage"></span>
     </div>
     <div class="records" id="recordsTable"><div class="muted" style="padding:14px">Carrega um ficheiro Excel para ver os registos.</div></div>
+    <div id="missingPanel" class="note" style="display:none"></div>
   </div>
 
   <div class="card"><h2>Cliente</h2><div class="grid" id="cliente"></div></div>
@@ -65,10 +66,10 @@
 <script>
 const HEADERS=['ANO','MÊS','SEMANA','CLIENTES','GRUPO CLIENTE','ASSOCIADO','CONTRIBUINTE','COMERCIAL','ZONA','EMAIL','TELEMOVEL','DISTRITO','VENDEDOR','OD','DOCUMENTO','FORNECEDOR','ARTIGO','DESCRIÇAO','QUANTIDADE','VALOR LIQUIDO','IVA','VALOR TOTAL','PCUSTO','MARGEM_PERCENT_OLD','TECNICO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','PAGAMENTO','CUSTO TRANSPORTE','COMISSAO VENDEDOR','PCOMPRA','PVENDA','COMISSAO_PERCENT','VALOR_COMISSAO','MARGEM','MARGEM_PERCENT'];
 const listFields=['CLIENTES','GRUPO CLIENTE','ASSOCIADO','COMERCIAL','ZONA','DISTRITO','VENDEDOR','FORNECEDOR','ARTIGO','TECNICO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','PAGAMENTO'];
-const sections={cliente:['CLIENTES','GRUPO CLIENTE','ASSOCIADO','CONTRIBUINTE','EMAIL','TELEMOVEL','DISTRITO','COMERCIAL','ZONA','VENDEDOR'],documento:['DATA','DOCUMENTO','OD','PAGAMENTO','TECNICO','AREA DE NEGOCIO'],artigo:['ARTIGO','DESCRIÇAO','FORNECEDOR','PCUSTO','PCOMPRA','PVENDA','GRUPO','FAMILIAS','SUBFAMILIAS'],valores:['QUANTIDADE','VALOR LIQUIDO','IVA','CUSTO TRANSPORTE','COMISSAO VENDEDOR','COMISSAO_PERCENT']};
+const sections={cliente:['CLIENTES','GRUPO CLIENTE','ASSOCIADO','CONTRIBUINTE','EMAIL','TELEMOVEL','DISTRITO','COMERCIAL','ZONA','VENDEDOR'],documento:['DATA','SEMANA','DOCUMENTO','OD','PAGAMENTO','TECNICO','AREA DE NEGOCIO'],artigo:['ARTIGO','DESCRIÇAO','FORNECEDOR','PCUSTO','PCOMPRA','PVENDA','GRUPO','FAMILIAS','SUBFAMILIAS'],valores:['QUANTIDADE','VALOR LIQUIDO','IVA','CUSTO TRANSPORTE','COMISSAO VENDEDOR','COMISSAO_PERCENT']};
 const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','CUSTO TRANSPORTE','COMISSAO VENDEDOR','PCOMPRA','PVENDA','COMISSAO_PERCENT']);
 const MONTHS=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
-let wb=null, rows=[], filename='', controls={}, sessionSaved=0, ivaManual=false, editExcelRow=null, recordOffset=0;
+let wb=null, rows=[], filename='', controls={}, sessionSaved=0, ivaManual=false, semanaManual=false, editExcelRow=null, recordOffset=0;
 const PAGE_SIZE=25;
 function today(){return new Date().toISOString().slice(0,10)}
 function label(x){return x.replaceAll('_',' ')}
@@ -85,12 +86,14 @@ function field(container,name){
   el.id='f-'+name;
   if(name==='VALOR LIQUIDO')el.addEventListener('input',()=>{if(!ivaManual)applyAutomaticVat();calc()});
   else if(name==='IVA')el.addEventListener('input',()=>{ivaManual=true;calc()});
-  else el.addEventListener('input',calc);
+  else if(name==='SEMANA')el.addEventListener('input',()=>{semanaManual=true;calc();updateMissingFields()});
+  else if(name==='DATA')el.addEventListener('input',()=>{if(!semanaManual)applyAutomaticWeek();calc();updateMissingFields()});
+  else el.addEventListener('input',()=>{calc();updateMissingFields()});
   if(name==='CLIENTES')el.addEventListener('change',()=>autofill('CLIENTES',name,['CONTRIBUINTE','EMAIL','TELEMOVEL','DISTRITO','GRUPO CLIENTE','ASSOCIADO','COMERCIAL','ZONA','VENDEDOR']));
   if(name==='ARTIGO')el.addEventListener('change',()=>autofill('ARTIGO',name,['DESCRIÇAO','FORNECEDOR','PCUSTO','PCOMPRA','PVENDA','GRUPO','FAMILIAS','SUBFAMILIAS']));
   d.appendChild(el);container.appendChild(d);controls[name]=el;
 }
-function build(){Object.entries(sections).forEach(([id,fs])=>{const c=document.getElementById(id);c.innerHTML='';fs.forEach(f=>field(c,f))});controls.DATA.value=today();applyAutomaticVat();calc()}
+function build(){Object.entries(sections).forEach(([id,fs])=>{const c=document.getElementById(id);c.innerHTML='';fs.forEach(f=>field(c,f))});controls.DATA.value=today();applyAutomaticWeek();applyAutomaticVat();calc();updateMissingFields()}
 function val(k){return controls[k]?.value??''}
 function num(k){let s=String(val(k)).replace(',','.');let n=parseFloat(s);return Number.isFinite(n)?n:0}
 function setNumber(k,n){if(controls[k])controls[k].value=Number(n||0).toFixed(2)}
@@ -101,7 +104,12 @@ function weekText(d){
   const date=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=date.getDay()||7;
   const monday=new Date(date);monday.setDate(date.getDate()-(day-1));
   const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
-  return `S${isoWeek(date)}(${monday.getDate()}${MONTHS[monday.getMonth()]}-${sunday.getDate()}${MONTHS[sunday.getMonth()]} ${sunday.getFullYear()})`;
+  return `S${isoWeek(date)} (${monday.getDate()}${MONTHS[monday.getMonth()]}-${sunday.getDate()}${MONTHS[sunday.getMonth()]} ${sunday.getFullYear()})`;
+}
+function applyAutomaticWeek(){
+  if(!controls.SEMANA)return;
+  const d=val('DATA')?new Date(val('DATA')+'T12:00:00'):null;
+  controls.SEMANA.value=d&&!isNaN(d)?weekText(d):'';
 }
 function dateFromWeek(value,year,month){
   const text=String(value??'').toUpperCase();const m=text.match(/\((\d{1,2})([A-ZÇ]+)-/);
@@ -109,13 +117,13 @@ function dateFromWeek(value,year,month){
   if(year&&month){const d=new Date(Number(year),Number(month)-1,1);return d.toISOString().slice(0,10)}
   return today();
 }
-function calculated(){const d=val('DATA')?new Date(val('DATA')+'T12:00:00'):null;const liquido=num('VALOR LIQUIDO'),iva=num('IVA'),q=num('QUANTIDADE'),pc=num('PCUSTO'),trans=num('CUSTO TRANSPORTE'),perc=num('COMISSAO_PERCENT');const com=liquido*perc/100,margem=liquido-(pc*q)-trans-com;return {ANO:d?d.getFullYear():'','MÊS':d?d.getMonth()+1:'',SEMANA:d?weekText(d):'','VALOR TOTAL':liquido+iva,VALOR_COMISSAO:com,MARGEM:margem,MARGEM_PERCENT:liquido?margem/liquido:0}}
+function calculated(){const d=val('DATA')?new Date(val('DATA')+'T12:00:00'):null;const liquido=num('VALOR LIQUIDO'),iva=num('IVA'),q=num('QUANTIDADE'),pc=num('PCUSTO'),trans=num('CUSTO TRANSPORTE'),perc=num('COMISSAO_PERCENT');const com=liquido*perc/100,margem=liquido-(pc*q)-trans-com;return {ANO:d?d.getFullYear():'','MÊS':d?d.getMonth()+1:'',SEMANA:val('SEMANA'),'VALOR TOTAL':liquido+iva,VALOR_COMISSAO:com,MARGEM:margem,MARGEM_PERCENT:liquido?margem/liquido:0}}
 function calc(){const c=calculated();document.getElementById('calculos').innerHTML=[['ANO',c.ANO],['MÊS',c['MÊS']],['SEMANA',c.SEMANA],['VALOR TOTAL',money(c['VALOR TOTAL'])],['VALOR COMISSAO',money(c.VALOR_COMISSAO)],['MARGEM',money(c.MARGEM)],['MARGEM %',(c.MARGEM_PERCENT*100).toFixed(2)+'%']].map(x=>`<div><b>${x[0]}</b>${x[1]}</div>`).join('')}
 function money(n){return new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(n||0)}
 function message(t,ok=false){const m=document.getElementById('msg');m.textContent=t;m.className='msg '+(ok?'ok':'err')}
 function updateStatus(){document.getElementById('sessionCount').textContent=`Alterações guardadas nesta sessão: ${sessionSaved}`;if(wb)document.getElementById('status').textContent=`${filename} — ${rows.length} registos — ${sessionSaved} alteração(ões) nesta sessão`}
 function updateMode(){const m=document.getElementById('modeLabel');if(editExcelRow){m.textContent=`Modo: Editar linha ${editExcelRow}`;m.className='mode edit';document.getElementById('save').textContent='Gravar alterações'}else{m.textContent='Modo: Nova venda';m.className='mode';document.getElementById('save').textContent='Guardar'}}
-function clearForm(showMessage=true){Object.values(controls).forEach(x=>x.value='');controls.DATA.value=today();document.getElementById('spainNoVat').checked=false;ivaManual=false;editExcelRow=null;document.getElementById('rowSearch').value='';applyAutomaticVat();calc();updateMode();renderRecords();if(showMessage)message('Formulário limpo. Modo Nova venda.',true);controls.CLIENTES?.focus()}
+function clearForm(showMessage=true){Object.values(controls).forEach(x=>x.value='');controls.DATA.value=today();document.getElementById('spainNoVat').checked=false;ivaManual=false;semanaManual=false;editExcelRow=null;document.getElementById('rowSearch').value='';applyAutomaticWeek();applyAutomaticVat();calc();updateMode();updateMissingFields();renderRecords();if(showMessage)message('Formulário limpo. Modo Nova venda.',true);controls.CLIENTES?.focus()}
 function rowObjectFromForm(){const c=calculated(),obj={};HEADERS.forEach(h=>{if(h in c)obj[h]=c[h];else if(h==='MARGEM_PERCENT_OLD')obj[h]=c.MARGEM_PERCENT;else obj[h]=numeric.has(h)?(val(h)===''?'':num(h)):val(h)});return obj}
 function loadExcelRow(n){
   if(!wb)return message('Carrega primeiro o ficheiro Excel.');
@@ -124,10 +132,20 @@ function loadExcelRow(n){
   editExcelRow=n;
   HEADERS.forEach(h=>{if(controls[h])controls[h].value=obj[h]??''});
   controls.DATA.value=dateFromWeek(obj.SEMANA,obj.ANO,obj['MÊS']);
+  if(controls.SEMANA)controls.SEMANA.value=obj.SEMANA??'';
+  semanaManual=true;
   document.getElementById('spainNoVat').checked=Number(obj.IVA||0)===0;ivaManual=true;
-  document.getElementById('rowSearch').value=n;calc();updateMode();renderRecords();
+  document.getElementById('rowSearch').value=n;calc();updateMode();updateMissingFields();renderRecords();
   message(`Linha ${n} carregada. Podes completar ou corrigir os campos e carregar em “Gravar alterações”.`,true);
   window.scrollTo({top:document.getElementById('cliente').closest('.card').offsetTop-15,behavior:'smooth'});
+}
+function updateMissingFields(){
+  const panel=document.getElementById('missingPanel');if(!panel)return;
+  if(!editExcelRow){panel.style.display='none';panel.innerHTML='';return}
+  const check=['SEMANA','CLIENTES','GRUPO CLIENTE','ASSOCIADO','CONTRIBUINTE','COMERCIAL','ZONA','EMAIL','TELEMOVEL','DISTRITO','VENDEDOR','DOCUMENTO','FORNECEDOR','ARTIGO','DESCRIÇAO','QUANTIDADE','VALOR LIQUIDO','PAGAMENTO'];
+  const missing=check.filter(k=>String(val(k)??'').trim()==='');
+  panel.style.display='block';
+  panel.innerHTML=`<b>Linha Excel ${editExcelRow}</b><br>${missing.length?`<span style="color:#8a5a00">Registo incompleto — campos em falta: ${missing.map(label).join(', ')}</span>`:'<span style="color:#197a43">Registo sem campos principais em falta.</span>'}`;
 }
 function filteredRows(){const q=document.getElementById('recordFilter').value.trim().toLowerCase();if(!q)return rows;return rows.filter(r=>[r.CLIENTES,r.ARTIGO,r.DOCUMENTO,r.DESCRIÇAO,r.VENDEDOR,r.__excelRow].some(v=>String(v??'').toLowerCase().includes(q)))}
 function renderRecords(){
@@ -156,7 +174,7 @@ document.getElementById('save').onclick=()=>{
   if(editExcelRow){
     const index=rows.findIndex(r=>r.__excelRow===editExcelRow);if(index<0)return message('Não encontrei a linha que estava a editar.');
     XLSX.utils.sheet_add_aoa(ws,[HEADERS.map(h=>obj[h]??'')],{origin:{r:editExcelRow-1,c:0}});
-    rows[index]={...obj,__excelRow:editExcelRow};sessionSaved++;const n=editExcelRow;updateStatus();renderRecords();message(`Alterações gravadas na linha ${n}. No fim, carrega em “Descarregar Excel”.`,true);
+    rows[index]={...obj,__excelRow:editExcelRow};sessionSaved++;const n=editExcelRow;updateStatus();updateMissingFields();renderRecords();message(`Alterações gravadas na linha ${n}. No fim, carrega em “Descarregar Excel”.`,true);
   }else{
     XLSX.utils.sheet_add_aoa(ws,[HEADERS.map(h=>obj[h]??'')],{origin:-1});const newRow=rows.length+2;rows.push({...obj,__excelRow:newRow});sessionSaved++;updateStatus();recordOffset=Math.max(0,rows.length-PAGE_SIZE);clearForm(false);renderRecords();message(`Nova venda guardada na linha ${newRow}. No fim, carrega em “Descarregar Excel”.`,true);
   }
