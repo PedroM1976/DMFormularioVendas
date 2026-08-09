@@ -3,22 +3,46 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Formulário Rápido de Vendas</title>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<title>Formulário Rápido de Vendas · Supabase</title>
 <style>
-:root{font-family:Arial,sans-serif;color:#18323b;background:#f4f7f8}*{box-sizing:border-box}body{margin:0}.wrap{max-width:1120px;margin:auto;padding:22px}.top{background:#0f6674;color:white;padding:24px;border-radius:14px;margin-bottom:18px}.top h1{margin:0 0 6px}.bar,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.card{background:white;border:1px solid #d8e2e5;border-radius:14px;padding:18px;margin:16px 0;box-shadow:0 2px 8px #0000000d}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.field label{font-size:13px;font-weight:700;display:block;margin-bottom:6px}.field input,.field select{width:100%;height:42px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px;background:white;font-size:15px}.field input:focus,.field select:focus{outline:2px solid #55aebe;border-color:#55aebe}.btn{border:0;border-radius:9px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:15px}.primary{background:#0f6674;color:white}.download{background:#197a43;color:white}.secondary{background:#e7eff1;color:#18323b}.status{margin-top:10px;background:#ffffff22;padding:10px;border-radius:8px}.calc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.calc div{background:#edf6f7;padding:12px;border-radius:9px}.calc b{display:block;font-size:12px;margin-bottom:4px}.msg{padding:11px;border-radius:8px;margin:12px 0;display:none}.ok{display:block;background:#ddf3e4;color:#155d2f}.err{display:block;background:#f8dddd;color:#8b1c1c}.small{font-size:12px;color:#456}.note{background:#fff6d9;border:1px solid #ecd98a;padding:10px;border-radius:8px;margin-top:12px}.switchbox{display:flex;align-items:center;gap:10px;background:#fff6d9;border:1px solid #ecd98a;padding:12px;border-radius:9px;min-height:42px}.switchbox input{width:20px;height:20px}.session{font-weight:700;background:#dff1f4;color:#154c56;padding:10px 14px;border-radius:9px}.required{color:#a93434}.lookup{display:grid;grid-template-columns:180px auto auto;gap:10px;align-items:end}.mode{font-weight:700;padding:10px 14px;border-radius:9px;background:#e7eff1}.mode.edit{background:#fff0c7;color:#775500}.records{overflow:auto;max-height:360px;border:1px solid #d8e2e5;border-radius:9px}.records table{width:100%;border-collapse:collapse;font-size:13px}.records th,.records td{padding:8px 10px;border-bottom:1px solid #e3eaec;text-align:left;white-space:nowrap}.records th{position:sticky;top:0;background:#edf6f7;z-index:1}.records tr:hover{background:#f4fafb;cursor:pointer}.records .active{background:#fff0c7}.muted{color:#60737a}.recordsbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}@media(max-width:850px){.lookup{grid-template-columns:1fr 1fr}.lookup .mode{grid-column:1/-1}.grid{grid-template-columns:1fr 1fr}.calc{grid-template-columns:1fr 1fr}}@media(max-width:560px){.lookup{grid-template-columns:1fr}.grid,.calc{grid-template-columns:1fr}.actions .btn{width:100%}}
+:root{font-family:Arial,sans-serif;color:#18323b;background:#f4f7f8}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:1120px;margin:auto;padding:22px}
+.top{background:#0f6674;color:white;padding:24px;border-radius:14px;margin-bottom:18px}
+.top h1{margin:0 0 6px}.bar,.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.card{background:white;border:1px solid #d8e2e5;border-radius:14px;padding:18px;margin:16px 0;box-shadow:0 2px 8px #0000000d}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.field label{font-size:13px;font-weight:700;display:block;margin-bottom:6px}
+.field input,.field select{width:100%;height:42px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px;background:white;font-size:15px}
+.field input:focus,.field select:focus{outline:2px solid #55aebe;border-color:#55aebe}
+.btn{border:0;border-radius:9px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:15px}
+.primary{background:#0f6674;color:white}.secondary{background:#e7eff1;color:#18323b}.danger{background:#a93434;color:#fff}
+.status{margin-top:10px;background:#ffffff22;padding:10px;border-radius:8px}
+.calc{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.calc div{background:#edf6f7;padding:12px;border-radius:9px}.calc b{display:block;font-size:12px;margin-bottom:4px}
+.msg{padding:11px;border-radius:8px;margin:12px 0;display:none}.ok{display:block;background:#ddf3e4;color:#155d2f}.err{display:block;background:#f8dddd;color:#8b1c1c}
+.small{font-size:12px;color:#456}.note{background:#fff6d9;border:1px solid #ecd98a;padding:10px;border-radius:8px;margin-top:12px}
+.switchbox{display:flex;align-items:center;gap:10px;background:#fff6d9;border:1px solid #ecd98a;padding:12px;border-radius:9px;min-height:42px}
+.switchbox input{width:20px;height:20px}.session{font-weight:700;background:#dff1f4;color:#154c56;padding:10px 14px;border-radius:9px}
+.required{color:#a93434}.lookup{display:grid;grid-template-columns:180px auto auto;gap:10px;align-items:end}
+.mode{font-weight:700;padding:10px 14px;border-radius:9px;background:#e7eff1}.mode.edit{background:#fff0c7;color:#775500}
+.records{overflow:auto;max-height:360px;border:1px solid #d8e2e5;border-radius:9px}
+.records table{width:100%;border-collapse:collapse;font-size:13px}.records th,.records td{padding:8px 10px;border-bottom:1px solid #e3eaec;text-align:left;white-space:nowrap}
+.records th{position:sticky;top:0;background:#edf6f7;z-index:1}.records tr:hover{background:#f4fafb;cursor:pointer}.records .active{background:#fff0c7}
+.muted{color:#60737a}.recordsbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+@media(max-width:850px){.lookup{grid-template-columns:1fr 1fr}.lookup .mode{grid-column:1/-1}.grid{grid-template-columns:1fr 1fr}.calc{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.lookup{grid-template-columns:1fr}.grid,.calc{grid-template-columns:1fr}.actions .btn{width:100%}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
     <h1>Inserção Rápida de Vendas</h1>
-    <div>Escolhe o cliente e o artigo, confirma os valores e guarda. A Semana é opcional e editável. Descarrega o Excel apenas no fim.</div>
+    <div>Ligado diretamente à tabela <b>vendas</b> do Supabase. Não é necessário carregar nem descarregar Excel.</div>
     <div class="bar" style="margin-top:14px">
-      <input id="file" type="file" accept=".xlsx" />
+      <button class="btn secondary" id="refresh">Atualizar dados</button>
       <button class="btn secondary" id="clear">Limpar formulário</button>
     </div>
-    <div class="status" id="status">Nenhum ficheiro carregado.</div>
+    <div class="status" id="status">A ligar ao Supabase…</div>
   </div>
 
   <div id="msg" class="msg"></div>
@@ -26,24 +50,23 @@
   <div class="card">
     <h2>Procurar e editar registo</h2>
     <div class="lookup">
-      <div class="field"><label>Número da linha no Excel</label><input id="rowSearch" type="number" min="2" step="1" placeholder="Ex.: 4575"></div>
-      <button class="btn secondary" id="loadRow">Carregar linha</button>
+      <div class="field"><label>ID da venda</label><input id="rowSearch" type="number" min="1" step="1" placeholder="Ex.: 4575"></div>
+      <button class="btn secondary" id="loadRow">Carregar venda</button>
       <button class="btn secondary" id="newMode">Nova venda</button>
       <span class="mode" id="modeLabel">Modo: Nova venda</span>
     </div>
     <div class="recordsbar" style="margin-top:16px">
-      <b>Registos do ficheiro</b>
-      <input id="recordFilter" placeholder="Pesquisar cliente, artigo ou documento" style="height:38px;min-width:280px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px">
+      <b>Registos no Supabase</b>
+      <input id="recordFilter" placeholder="Pesquisar cliente, artigo, descrição ou vendedor" style="height:38px;min-width:280px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px">
       <button class="btn secondary" id="showPrevious">◀ Anteriores</button>
       <button class="btn secondary" id="showNext">Seguintes ▶</button>
       <span class="muted" id="recordPage"></span>
     </div>
-    <div class="records" id="recordsTable"><div class="muted" style="padding:14px">Carrega um ficheiro Excel para ver os registos.</div></div>
-    <div id="missingPanel" class="note" style="display:none"></div>
+    <div class="records" id="recordsTable"><div class="muted" style="padding:14px">A carregar registos…</div></div>
   </div>
 
   <div class="card"><h2>Cliente</h2><div class="grid" id="cliente"></div></div>
-  <div class="card"><h2>Documento</h2><div class="grid" id="documento"></div></div>
+  <div class="card"><h2>Documento / Data</h2><div class="grid" id="documento"></div></div>
   <div class="card"><h2>Artigo</h2><div class="grid" id="artigo"></div></div>
   <div class="card">
     <h2>Valores</h2>
@@ -56,132 +79,294 @@
   <div class="card"><h2>Cálculos automáticos</h2><div class="calc" id="calculos"></div></div>
 
   <div class="actions">
-    <button class="btn primary" id="save">Guardar</button>
-    <button class="btn download" id="download">Descarregar Excel</button>
-    <span class="session" id="sessionCount">Vendas guardadas nesta sessão: 0</span>
+    <button class="btn primary" id="save">Guardar no Supabase</button>
+    <span class="session" id="sessionCount">Alterações nesta sessão: 0</span>
   </div>
 
-  <div class="note"><b>Importante:</b> o botão <b>Guardar</b> adiciona a venda apenas ao ficheiro em memória. Antes de fechar esta página, carrega em <b>Descarregar Excel</b> para obter o ficheiro atualizado.</div>
+  <div class="note"><b>Importante:</b> ao carregar em <b>Guardar no Supabase</b>, a venda fica imediatamente gravada na base central. O Portal DM passa a lê-la na atualização seguinte.</div>
 </div>
+
 <script>
-const HEADERS=['ANO','MÊS','SEMANA','CLIENTES','GRUPO CLIENTE','ASSOCIADO','CONTRIBUINTE','COMERCIAL','ZONA','EMAIL','TELEMOVEL','DISTRITO','VENDEDOR','OD','DOCUMENTO','FORNECEDOR','ARTIGO','DESCRIÇAO','QUANTIDADE','VALOR LIQUIDO','IVA','VALOR TOTAL','PCUSTO','MARGEM_PERCENT_OLD','TECNICO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','PAGAMENTO','CUSTO TRANSPORTE','COMISSAO VENDEDOR','PCOMPRA','PVENDA','COMISSAO_PERCENT','VALOR_COMISSAO','MARGEM','MARGEM_PERCENT'];
-const listFields=['CLIENTES','GRUPO CLIENTE','ASSOCIADO','COMERCIAL','ZONA','DISTRITO','VENDEDOR','FORNECEDOR','ARTIGO','TECNICO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','PAGAMENTO'];
-const sections={cliente:['CLIENTES','GRUPO CLIENTE','ASSOCIADO','CONTRIBUINTE','EMAIL','TELEMOVEL','DISTRITO','COMERCIAL','ZONA','VENDEDOR'],documento:['DATA','SEMANA','DOCUMENTO','OD','PAGAMENTO','TECNICO','AREA DE NEGOCIO'],artigo:['ARTIGO','DESCRIÇAO','FORNECEDOR','PCUSTO','PCOMPRA','PVENDA','GRUPO','FAMILIAS','SUBFAMILIAS'],valores:['QUANTIDADE','VALOR LIQUIDO','IVA','CUSTO TRANSPORTE','COMISSAO VENDEDOR','COMISSAO_PERCENT']};
-const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','CUSTO TRANSPORTE','COMISSAO VENDEDOR','PCOMPRA','PVENDA','COMISSAO_PERCENT']);
-const MONTHS=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
-let wb=null, rows=[], filename='', controls={}, sessionSaved=0, ivaManual=false, semanaManual=false, editExcelRow=null, recordOffset=0;
+const SUPABASE_URL='https://lyihzeddgfbzmuqwrjya.supabase.co';
+const SUPABASE_KEY='sb_publishable_sBVSviRAaAi_l92aszt9xg_Q76yHSZC';
+const TABLE='vendas';
+const SOURCE_KEY='BASE_SAGE';
+
+const sections={
+  cliente:['CLIENTES','CONTRIBUINTE','DISTRITO','VENDEDOR'],
+  documento:['DATA','SEMANA','AREA DE NEGOCIO'],
+  artigo:['ARTIGO','DESCRIÇAO','PCUSTO','GRUPO','FAMILIAS','SUBFAMILIAS'],
+  valores:['QUANTIDADE','VALOR LIQUIDO','IVA']
+};
+const listFields=['CLIENTES','DISTRITO','VENDEDOR','ARTIGO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS'];
+const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','SEMANA']);
+let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false;
 const PAGE_SIZE=25;
+
 function today(){return new Date().toISOString().slice(0,10)}
 function label(x){return x.replaceAll('_',' ')}
 function unique(field){return [...new Set(rows.map(r=>String(r[field]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'))}
-function field(container,name){
-  const d=document.createElement('div');d.className='field';
-  const l=document.createElement('label');l.innerHTML=label(name)+(name==='CLIENTES'||name==='ARTIGO'||name==='QUANTIDADE'||name==='VALOR LIQUIDO'?'<span class="required"> *</span>':'');d.appendChild(l);
-  let el;
-  if(listFields.includes(name)){
-    el=document.createElement('input');el.setAttribute('list','list-'+name);
-    const dl=document.createElement('datalist');dl.id='list-'+name;
-    unique(name).forEach(v=>{const o=document.createElement('option');o.value=v;dl.appendChild(o)});d.appendChild(dl);
-  }else{el=document.createElement('input');el.type=name==='DATA'?'date':numeric.has(name)?'number':'text';if(el.type==='number')el.step='any'}
-  el.id='f-'+name;
-  if(name==='VALOR LIQUIDO')el.addEventListener('input',()=>{if(!ivaManual)applyAutomaticVat();calc()});
-  else if(name==='IVA')el.addEventListener('input',()=>{ivaManual=true;calc()});
-  else if(name==='SEMANA')el.addEventListener('input',()=>{semanaManual=true;calc();updateMissingFields()});
-  else if(name==='DATA')el.addEventListener('input',()=>{if(!semanaManual)applyAutomaticWeek();calc();updateMissingFields()});
-  else el.addEventListener('input',()=>{calc();updateMissingFields()});
-  if(name==='CLIENTES')el.addEventListener('change',()=>autofill('CLIENTES',name,['CONTRIBUINTE','EMAIL','TELEMOVEL','DISTRITO','GRUPO CLIENTE','ASSOCIADO','COMERCIAL','ZONA','VENDEDOR']));
-  if(name==='ARTIGO')el.addEventListener('change',()=>autofill('ARTIGO',name,['DESCRIÇAO','FORNECEDOR','PCUSTO','PCOMPRA','PVENDA','GRUPO','FAMILIAS','SUBFAMILIAS']));
-  d.appendChild(el);container.appendChild(d);controls[name]=el;
-}
-function build(){Object.entries(sections).forEach(([id,fs])=>{const c=document.getElementById(id);c.innerHTML='';fs.forEach(f=>field(c,f))});controls.DATA.value=today();applyAutomaticWeek();applyAutomaticVat();calc();updateMissingFields()}
+function money(n){return new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(n||0)}
+function message(t,ok=false){const m=document.getElementById('msg');m.textContent=t;m.className='msg '+(ok?'ok':'err')}
 function val(k){return controls[k]?.value??''}
 function num(k){let s=String(val(k)).replace(',','.');let n=parseFloat(s);return Number.isFinite(n)?n:0}
 function setNumber(k,n){if(controls[k])controls[k].value=Number(n||0).toFixed(2)}
-function applyAutomaticVat(){const noVat=document.getElementById('spainNoVat').checked;setNumber('IVA',noVat?0:num('VALOR LIQUIDO')*0.23)}
-function autofill(key,control,fields){if(editExcelRow)return;const v=val(control).trim();for(let i=rows.length-1;i>=0;i--){if(String(rows[i][key]??'').trim()===v){fields.forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});calc();break}}}
-function isoWeek(d){const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));const y=new Date(Date.UTC(x.getUTCFullYear(),0,1));return Math.ceil((((x-y)/86400000)+1)/7)}
-function weekText(d){
-  const date=new Date(d.getFullYear(),d.getMonth(),d.getDate());const day=date.getDay()||7;
-  const monday=new Date(date);monday.setDate(date.getDate()-(day-1));
-  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
-  return `S${isoWeek(date)} (${monday.getDate()}${MONTHS[monday.getMonth()]}-${sunday.getDate()}${MONTHS[sunday.getMonth()]} ${sunday.getFullYear()})`;
+
+function isoWeek(d){
+  const x=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  x.setUTCDate(x.getUTCDate()+4-(x.getUTCDay()||7));
+  const y=new Date(Date.UTC(x.getUTCFullYear(),0,1));
+  return Math.ceil((((x-y)/86400000)+1)/7);
 }
 function applyAutomaticWeek(){
   if(!controls.SEMANA)return;
   const d=val('DATA')?new Date(val('DATA')+'T12:00:00'):null;
-  controls.SEMANA.value=d&&!isNaN(d)?weekText(d):'';
+  controls.SEMANA.value=d&&!isNaN(d)?isoWeek(d):'';
 }
-function dateFromWeek(value,year,month){
-  const text=String(value??'').toUpperCase();const m=text.match(/\((\d{1,2})([A-ZÇ]+)-/);
-  if(m){const mi=MONTHS.indexOf(m[2]);if(mi>=0){const d=new Date(Number(year)||new Date().getFullYear(),mi,Number(m[1]));if(!isNaN(d))return d.toISOString().slice(0,10)}}
-  if(year&&month){const d=new Date(Number(year),Number(month)-1,1);return d.toISOString().slice(0,10)}
-  return today();
+function applyAutomaticVat(){
+  const noVat=document.getElementById('spainNoVat').checked;
+  setNumber('IVA',noVat?0:num('VALOR LIQUIDO')*0.23)
 }
-function calculated(){const d=val('DATA')?new Date(val('DATA')+'T12:00:00'):null;const liquido=num('VALOR LIQUIDO'),iva=num('IVA'),q=num('QUANTIDADE'),pc=num('PCUSTO'),trans=num('CUSTO TRANSPORTE'),perc=num('COMISSAO_PERCENT');const com=liquido*perc/100,margem=liquido-(pc*q)-trans-com;return {ANO:d?d.getFullYear():'','MÊS':d?d.getMonth()+1:'',SEMANA:val('SEMANA'),'VALOR TOTAL':liquido+iva,VALOR_COMISSAO:com,MARGEM:margem,MARGEM_PERCENT:liquido?margem/liquido:0}}
-function calc(){const c=calculated();document.getElementById('calculos').innerHTML=[['ANO',c.ANO],['MÊS',c['MÊS']],['SEMANA',c.SEMANA],['VALOR TOTAL',money(c['VALOR TOTAL'])],['VALOR COMISSAO',money(c.VALOR_COMISSAO)],['MARGEM',money(c.MARGEM)],['MARGEM %',(c.MARGEM_PERCENT*100).toFixed(2)+'%']].map(x=>`<div><b>${x[0]}</b>${x[1]}</div>`).join('')}
-function money(n){return new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(n||0)}
-function message(t,ok=false){const m=document.getElementById('msg');m.textContent=t;m.className='msg '+(ok?'ok':'err')}
-function updateStatus(){document.getElementById('sessionCount').textContent=`Alterações guardadas nesta sessão: ${sessionSaved}`;if(wb)document.getElementById('status').textContent=`${filename} — ${rows.length} registos — ${sessionSaved} alteração(ões) nesta sessão`}
-function updateMode(){const m=document.getElementById('modeLabel');if(editExcelRow){m.textContent=`Modo: Editar linha ${editExcelRow}`;m.className='mode edit';document.getElementById('save').textContent='Gravar alterações'}else{m.textContent='Modo: Nova venda';m.className='mode';document.getElementById('save').textContent='Guardar'}}
-function clearForm(showMessage=true){Object.values(controls).forEach(x=>x.value='');controls.DATA.value=today();document.getElementById('spainNoVat').checked=false;ivaManual=false;semanaManual=false;editExcelRow=null;document.getElementById('rowSearch').value='';applyAutomaticWeek();applyAutomaticVat();calc();updateMode();updateMissingFields();renderRecords();if(showMessage)message('Formulário limpo. Modo Nova venda.',true);controls.CLIENTES?.focus()}
-function rowObjectFromForm(){const c=calculated(),obj={};HEADERS.forEach(h=>{if(h in c)obj[h]=c[h];else if(h==='MARGEM_PERCENT_OLD')obj[h]=c.MARGEM_PERCENT;else obj[h]=numeric.has(h)?(val(h)===''?'':num(h)):val(h)});return obj}
-function loadExcelRow(n){
-  if(!wb)return message('Carrega primeiro o ficheiro Excel.');
-  n=Number(n);if(!Number.isInteger(n)||n<2)return message('Introduz um número de linha válido, a partir da linha 2.');
-  const obj=rows.find(r=>r.__excelRow===n);if(!obj)return message(`A linha ${n} não existe no ficheiro carregado.`);
-  editExcelRow=n;
-  HEADERS.forEach(h=>{if(controls[h])controls[h].value=obj[h]??''});
-  controls.DATA.value=dateFromWeek(obj.SEMANA,obj.ANO,obj['MÊS']);
-  if(controls.SEMANA)controls.SEMANA.value=obj.SEMANA??'';
-  semanaManual=true;
-  document.getElementById('spainNoVat').checked=Number(obj.IVA||0)===0;ivaManual=true;
-  document.getElementById('rowSearch').value=n;calc();updateMode();updateMissingFields();renderRecords();
-  message(`Linha ${n} carregada. Podes completar ou corrigir os campos e carregar em “Gravar alterações”.`,true);
-  window.scrollTo({top:document.getElementById('cliente').closest('.card').offsetTop-15,behavior:'smooth'});
+function calculated(){
+  const d=val('DATA')?new Date(val('DATA')+'T12:00:00'):null;
+  const liquido=num('VALOR LIQUIDO'),iva=num('IVA'),q=num('QUANTIDADE'),pc=num('PCUSTO');
+  const margem=liquido-(pc*q);
+  return {
+    ANO:d?d.getFullYear():null,
+    MES:d?d.getMonth()+1:null,
+    SEMANA:val('SEMANA')===''?null:Math.trunc(num('SEMANA')),
+    VALOR_TOTAL:liquido+iva,
+    MARGEM:margem,
+    MARGEM_PERCENT:liquido?margem/liquido:0
+  }
 }
-function updateMissingFields(){
-  const panel=document.getElementById('missingPanel');if(!panel)return;
-  if(!editExcelRow){panel.style.display='none';panel.innerHTML='';return}
-  const check=['SEMANA','CLIENTES','GRUPO CLIENTE','ASSOCIADO','CONTRIBUINTE','COMERCIAL','ZONA','EMAIL','TELEMOVEL','DISTRITO','VENDEDOR','DOCUMENTO','FORNECEDOR','ARTIGO','DESCRIÇAO','QUANTIDADE','VALOR LIQUIDO','PAGAMENTO'];
-  const missing=check.filter(k=>String(val(k)??'').trim()==='');
-  panel.style.display='block';
-  panel.innerHTML=`<b>Linha Excel ${editExcelRow}</b><br>${missing.length?`<span style="color:#8a5a00">Registo incompleto — campos em falta: ${missing.map(label).join(', ')}</span>`:'<span style="color:#197a43">Registo sem campos principais em falta.</span>'}`;
+function calc(){
+  const c=calculated();
+  document.getElementById('calculos').innerHTML=[
+    ['ANO',c.ANO??''],['MÊS',c.MES??''],['SEMANA',c.SEMANA??''],
+    ['VALOR TOTAL',money(c.VALOR_TOTAL)],['MARGEM',money(c.MARGEM)],
+    ['MARGEM %',(c.MARGEM_PERCENT*100).toFixed(2)+'%']
+  ].map(x=>`<div><b>${x[0]}</b>${x[1]}</div>`).join('')
 }
-function filteredRows(){const q=document.getElementById('recordFilter').value.trim().toLowerCase();if(!q)return rows;return rows.filter(r=>[r.CLIENTES,r.ARTIGO,r.DOCUMENTO,r.DESCRIÇAO,r.VENDEDOR,r.__excelRow].some(v=>String(v??'').toLowerCase().includes(q)))}
+
+function field(container,name){
+  const d=document.createElement('div');d.className='field';
+  const l=document.createElement('label');
+  l.innerHTML=label(name)+(name==='CLIENTES'||name==='ARTIGO'||name==='QUANTIDADE'||name==='VALOR LIQUIDO'?'<span class="required"> *</span>':'');
+  d.appendChild(l);
+  let el;
+  if(listFields.includes(name)){
+    el=document.createElement('input');el.setAttribute('list','list-'+name);
+    const dl=document.createElement('datalist');dl.id='list-'+name;
+    unique(name).forEach(v=>{const o=document.createElement('option');o.value=v;dl.appendChild(o)});
+    d.appendChild(dl);
+  }else{
+    el=document.createElement('input');
+    el.type=name==='DATA'?'date':numeric.has(name)?'number':'text';
+    if(el.type==='number')el.step=name==='SEMANA'?'1':'any';
+  }
+  el.id='f-'+name;
+  if(name==='VALOR LIQUIDO')el.addEventListener('input',()=>{if(!ivaManual)applyAutomaticVat();calc()});
+  else if(name==='IVA')el.addEventListener('input',()=>{ivaManual=true;calc()});
+  else if(name==='SEMANA')el.addEventListener('input',()=>{semanaManual=true;calc()});
+  else if(name==='DATA')el.addEventListener('input',()=>{if(!semanaManual)applyAutomaticWeek();calc()});
+  else el.addEventListener('input',calc);
+  if(name==='CLIENTES')el.addEventListener('change',()=>autofillClient());
+  if(name==='ARTIGO')el.addEventListener('change',()=>autofillArticle());
+  d.appendChild(el);container.appendChild(d);controls[name]=el;
+}
+function build(){
+  Object.entries(sections).forEach(([id,fs])=>{
+    const c=document.getElementById(id);c.innerHTML='';fs.forEach(f=>field(c,f))
+  });
+  controls.DATA.value=today();applyAutomaticWeek();applyAutomaticVat();calc();
+}
+function rebuildLists(){
+  const previous={};Object.keys(controls).forEach(k=>previous[k]=controls[k]?.value??'');
+  build();Object.keys(previous).forEach(k=>{if(controls[k]&&previous[k]!=='')controls[k].value=previous[k]});calc();
+}
+function autofillClient(){
+  if(editId)return;
+  const v=val('CLIENTES').trim();
+  for(let i=rows.length-1;i>=0;i--){
+    if(String(rows[i].CLIENTES??'').trim()===v){
+      ['CONTRIBUINTE','DISTRITO','VENDEDOR'].forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});
+      calc();break;
+    }
+  }
+}
+function autofillArticle(){
+  if(editId)return;
+  const v=val('ARTIGO').trim();
+  for(let i=rows.length-1;i>=0;i--){
+    if(String(rows[i].ARTIGO??'').trim()===v){
+      ['DESCRIÇAO','PCUSTO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS'].forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});
+      calc();break;
+    }
+  }
+}
+function updateStatus(){
+  document.getElementById('sessionCount').textContent=`Alterações nesta sessão: ${sessionSaved}`;
+  document.getElementById('status').textContent=`Supabase ligado — ${rows.length} registos carregados — ${sessionSaved} alteração(ões) nesta sessão`;
+}
+function updateMode(){
+  const m=document.getElementById('modeLabel');
+  if(editId){
+    m.textContent=`Modo: Editar venda ID ${editId}`;m.className='mode edit';
+    document.getElementById('save').textContent='Gravar alterações no Supabase'
+  }else{
+    m.textContent='Modo: Nova venda';m.className='mode';
+    document.getElementById('save').textContent='Guardar no Supabase'
+  }
+}
+function clearForm(showMessage=true){
+  Object.values(controls).forEach(x=>x.value='');
+  controls.DATA.value=today();document.getElementById('spainNoVat').checked=false;
+  ivaManual=false;semanaManual=false;editId=null;document.getElementById('rowSearch').value='';
+  applyAutomaticWeek();applyAutomaticVat();calc();updateMode();renderRecords();
+  if(showMessage)message('Formulário limpo. Modo Nova venda.',true);
+  controls.CLIENTES?.focus()
+}
+function fromDb(r){
+  return {
+    id:r.id, source_key:r.source_key, DATA:r.data_documento||'',
+    ANO:r.ano, 'MÊS':r.mes, SEMANA:r.semana,
+    CLIENTES:r.cliente||'', CONTRIBUINTE:r.nif||'', DISTRITO:r.distrito||'',
+    VENDEDOR:r.vendedor||'', ARTIGO:r.artigo||'', 'DESCRIÇAO':r.descricao||'',
+    QUANTIDADE:r.quantidade, 'VALOR LIQUIDO':r.valor_liquido, IVA:r.iva,
+    'VALOR TOTAL':r.valor_total, PCUSTO:r.pcusto, MARGEM:r.margem,
+    'AREA DE NEGOCIO':r.area||'', GRUPO:r.grupo||'', FAMILIAS:r.familia||'', SUBFAMILIAS:r.subfamilia||''
+  }
+}
+function toDb(){
+  const c=calculated();
+  return {
+    source_key:SOURCE_KEY,
+    data_documento:val('DATA')||null,
+    ano:c.ANO, mes:c.MES, semana:c.SEMANA,
+    vendedor:val('VENDEDOR').trim()||null,
+    cliente:val('CLIENTES').trim()||null,
+    nif:val('CONTRIBUINTE').trim()||null,
+    artigo:val('ARTIGO').trim()||null,
+    descricao:val('DESCRIÇAO').trim()||null,
+    quantidade:num('QUANTIDADE'),
+    valor_liquido:num('VALOR LIQUIDO'),
+    iva:num('IVA'),
+    valor_total:c.VALOR_TOTAL,
+    pcusto:num('PCUSTO'),
+    margem:c.MARGEM,
+    area:val('AREA DE NEGOCIO').trim()||null,
+    grupo:val('GRUPO').trim()||null,
+    familia:val('FAMILIAS').trim()||null,
+    subfamilia:val('SUBFAMILIAS').trim()||null,
+    distrito:val('DISTRITO').trim()||null,
+    updated_at:new Date().toISOString()
+  }
+}
+async function api(path,options={}){
+  const headers={
+    apikey:SUPABASE_KEY,
+    Authorization:`Bearer ${SUPABASE_KEY}`,
+    'Content-Type':'application/json',
+    Prefer:options.prefer||''
+  };
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{...options,headers:{...headers,...(options.headers||{})}});
+  if(!res.ok){
+    let txt=await res.text();throw new Error(txt||`Erro Supabase ${res.status}`);
+  }
+  if(res.status===204)return null;
+  const t=await res.text();return t?JSON.parse(t):null;
+}
+async function loadAllRows(){
+  if(loading)return;loading=true;
+  document.getElementById('status').textContent='A carregar vendas do Supabase…';
+  try{
+    const all=[];const limit=1000;
+    for(let offset=0;;offset+=limit){
+      const page=await api(`${TABLE}?select=*&source_key=eq.${encodeURIComponent(SOURCE_KEY)}&order=id.asc&limit=${limit}&offset=${offset}`,{method:'GET'});
+      all.push(...(page||[]));
+      if(!page||page.length<limit)break;
+    }
+    rows=all.map(fromDb);
+    rebuildLists();updateStatus();recordOffset=Math.max(0,rows.length-PAGE_SIZE);renderRecords();
+    message('Dados carregados diretamente do Supabase.',true)
+  }catch(e){
+    document.getElementById('status').textContent='Erro na ligação ao Supabase.';
+    message('Não foi possível carregar as vendas: '+(e.message||e))
+  }finally{loading=false}
+}
+function loadDbRow(id){
+  id=Number(id);if(!Number.isInteger(id)||id<1)return message('Introduz um ID válido.');
+  const obj=rows.find(r=>Number(r.id)===id);if(!obj)return message(`Não encontrei a venda ID ${id}.`);
+  editId=id;
+  Object.keys(controls).forEach(h=>{if(controls[h])controls[h].value=obj[h]??''});
+  if(!controls.DATA.value && obj.ANO && obj['MÊS'])controls.DATA.value=`${obj.ANO}-${String(obj['MÊS']).padStart(2,'0')}-01`;
+  document.getElementById('spainNoVat').checked=Number(obj.IVA||0)===0;
+  ivaManual=true;semanaManual=true;document.getElementById('rowSearch').value=id;
+  calc();updateMode();renderRecords();
+  message(`Venda ID ${id} carregada para edição.`,true);
+  window.scrollTo({top:document.getElementById('cliente').closest('.card').offsetTop-15,behavior:'smooth'})
+}
+function filteredRows(){
+  const q=document.getElementById('recordFilter').value.trim().toLowerCase();
+  if(!q)return rows;
+  return rows.filter(r=>[r.id,r.CLIENTES,r.ARTIGO,r['DESCRIÇAO'],r.VENDEDOR].some(v=>String(v??'').toLowerCase().includes(q)))
+}
 function renderRecords(){
   const all=filteredRows();const max=Math.max(0,all.length-PAGE_SIZE);recordOffset=Math.min(Math.max(0,recordOffset),max);
   const page=all.slice(recordOffset,recordOffset+PAGE_SIZE);const box=document.getElementById('recordsTable');
-  if(!wb){box.innerHTML='<div class="muted" style="padding:14px">Carrega um ficheiro Excel para ver os registos.</div>';return}
-  box.innerHTML=`<table><thead><tr><th>Linha</th><th>Semana</th><th>Cliente</th><th>Documento</th><th>Artigo</th><th>Descrição</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th></tr></thead><tbody>${page.map(r=>`<tr data-row="${r.__excelRow}" class="${r.__excelRow===editExcelRow?'active':''}"><td><b>${r.__excelRow}</b></td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.DOCUMENTO??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td></tr>`).join('')}</tbody></table>`;
-  box.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>loadExcelRow(Number(tr.dataset.row)));
-  document.getElementById('recordPage').textContent=all.length?`A mostrar ${recordOffset+1}-${Math.min(recordOffset+PAGE_SIZE,all.length)} de ${all.length}`:'Sem resultados';
+  box.innerHTML=page.length?`<table><thead><tr><th>ID</th><th>Data</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
+  box.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>loadDbRow(Number(tr.dataset.id)));
+  document.getElementById('recordPage').textContent=all.length?`A mostrar ${recordOffset+1}-${Math.min(recordOffset+PAGE_SIZE,all.length)} de ${all.length}`:'Sem resultados'
 }
 
 document.getElementById('spainNoVat').addEventListener('change',()=>{ivaManual=false;applyAutomaticVat();calc()});
-document.getElementById('file').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const b=await f.arrayBuffer();wb=XLSX.read(b,{cellDates:true});const ws=wb.Sheets['Sheet1'];if(!ws)throw new Error("Não existe a folha 'Sheet1'.");const raw=XLSX.utils.sheet_to_json(ws,{defval:''});rows=raw.map((r,i)=>({...r,__excelRow:i+2}));filename=f.name;sessionSaved=0;recordOffset=Math.max(0,rows.length-PAGE_SIZE);build();clearForm(false);updateStatus();renderRecords();message('Ficheiro carregado. Podes inserir uma nova venda ou procurar uma linha para editar.',true)}catch(err){message(err.message||'Erro ao abrir o ficheiro.')}});
 document.getElementById('clear').onclick=()=>clearForm(true);
 document.getElementById('newMode').onclick=()=>clearForm(true);
-document.getElementById('loadRow').onclick=()=>loadExcelRow(document.getElementById('rowSearch').value);
-document.getElementById('rowSearch').addEventListener('keydown',e=>{if(e.key==='Enter')loadExcelRow(e.target.value)});
+document.getElementById('refresh').onclick=loadAllRows;
+document.getElementById('loadRow').onclick=()=>loadDbRow(document.getElementById('rowSearch').value);
+document.getElementById('rowSearch').addEventListener('keydown',e=>{if(e.key==='Enter')loadDbRow(e.target.value)});
 document.getElementById('recordFilter').addEventListener('input',()=>{recordOffset=0;renderRecords()});
 document.getElementById('showPrevious').onclick=()=>{recordOffset=Math.max(0,recordOffset-PAGE_SIZE);renderRecords()};
 document.getElementById('showNext').onclick=()=>{recordOffset+=PAGE_SIZE;renderRecords()};
 
-document.getElementById('save').onclick=()=>{
-  if(!wb)return message('Carrega primeiro o ficheiro Excel.');
-  if(!editExcelRow&&(!val('CLIENTES')||!val('ARTIGO')||num('QUANTIDADE')<=0||val('VALOR LIQUIDO')===''))return message('Para uma nova venda, preenche Cliente, Artigo, Quantidade e Valor Líquido.');
-  const obj=rowObjectFromForm(),ws=wb.Sheets['Sheet1'];
-  if(editExcelRow){
-    const index=rows.findIndex(r=>r.__excelRow===editExcelRow);if(index<0)return message('Não encontrei a linha que estava a editar.');
-    XLSX.utils.sheet_add_aoa(ws,[HEADERS.map(h=>obj[h]??'')],{origin:{r:editExcelRow-1,c:0}});
-    rows[index]={...obj,__excelRow:editExcelRow};sessionSaved++;const n=editExcelRow;updateStatus();updateMissingFields();renderRecords();message(`Alterações gravadas na linha ${n}. No fim, carrega em “Descarregar Excel”.`,true);
-  }else{
-    XLSX.utils.sheet_add_aoa(ws,[HEADERS.map(h=>obj[h]??'')],{origin:-1});const newRow=rows.length+2;rows.push({...obj,__excelRow:newRow});sessionSaved++;updateStatus();recordOffset=Math.max(0,rows.length-PAGE_SIZE);clearForm(false);renderRecords();message(`Nova venda guardada na linha ${newRow}. No fim, carrega em “Descarregar Excel”.`,true);
+document.getElementById('save').onclick=async()=>{
+  if(!val('CLIENTES')||!val('ARTIGO')||num('QUANTIDADE')<=0||val('VALOR LIQUIDO')===''){
+    return message('Preenche Cliente, Artigo, Quantidade e Valor Líquido.')
   }
+  const payload=toDb();
+  const btn=document.getElementById('save');btn.disabled=true;
+  try{
+    if(editId){
+      await api(`${TABLE}?id=eq.${editId}`,{
+        method:'PATCH',
+        body:JSON.stringify(payload),
+        prefer:'return=minimal'
+      });
+      sessionSaved++;
+      const id=editId;
+      await loadAllRows();
+      loadDbRow(id);
+      message(`Venda ID ${id} atualizada no Supabase.`,true)
+    }else{
+      payload.created_at=new Date().toISOString();
+      const created=await api(TABLE,{
+        method:'POST',
+        body:JSON.stringify(payload),
+        prefer:'return=representation'
+      });
+      sessionSaved++;
+      await loadAllRows();
+      clearForm(false);
+      message(`Nova venda gravada no Supabase${created&&created[0]?.id?' com ID '+created[0].id:''}.`,true)
+    }
+    updateStatus()
+  }catch(e){
+    message('Erro ao guardar no Supabase: '+(e.message||e))
+  }finally{btn.disabled=false}
 };
 
-document.getElementById('download').onclick=()=>{if(!wb)return message('Carrega primeiro o ficheiro Excel.');if(sessionSaved===0&&!confirm('Ainda não fizeste alterações nesta sessão. Queres descarregar o ficheiro na mesma?'))return;XLSX.writeFile(wb,filename||'Vendas_atualizado.xlsx');message(`Excel descarregado com ${sessionSaved} alteração(ões). Já podes substituir o ficheiro nos repositórios.`,true)};
-window.addEventListener('beforeunload',e=>{if(sessionSaved>0){e.preventDefault();e.returnValue=''}});
-build();updateMode();renderRecords();
+build();updateMode();renderRecords();loadAllRows();
 </script>
-</body></html>
+</body>
+</html>
