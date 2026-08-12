@@ -129,15 +129,22 @@ function applyAutomaticVat(){
 }
 function calculated(){
   const d=val('DATA')?new Date(val('DATA')+'T12:00:00'):null;
-  const liquido=num('VALOR LIQUIDO'),iva=num('IVA'),q=num('QUANTIDADE'),pc=num('PCUSTO');
-  const margem=liquido-(pc*q);
+  const liquido=num('VALOR LIQUIDO'),iva=num('IVA'),pc=num('PCUSTO');
+
+  // No ficheiro de vendas, PCUSTO já representa o custo total da linha.
+  // Não deve ser novamente multiplicado pela QUANTIDADE.
+  // Mantemos o valor apresentado em MARGEM igual ao valor existente nessa coluna
+  // e calculamos a percentagem pela diferença entre valor líquido e custo total.
+  const margem=pc;
+  const lucro=liquido-pc;
+
   return {
     ANO:d?d.getFullYear():null,
     MES:d?d.getMonth()+1:null,
     SEMANA:val('SEMANA')===''?null:Math.trunc(num('SEMANA')),
     VALOR_TOTAL:liquido+iva,
     MARGEM:margem,
-    MARGEM_PERCENT:liquido?margem/liquido:0
+    MARGEM_PERCENT:liquido?lucro/liquido:0
   }
 }
 function calc(){
