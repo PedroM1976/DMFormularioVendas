@@ -94,7 +94,7 @@ const SOURCE_KEY='BASE_SAGE';
 
 const sections={
   cliente:['CLIENTES','CONTRIBUINTE','DISTRITO','VENDEDOR'],
-  documento:['DATA','SEMANA','AREA DE NEGOCIO'],
+  documento:['DATA','DATA VENDA','SEMANA','AREA DE NEGOCIO'],
   artigo:['ARTIGO','DESCRIÇAO','PCUSTO','GRUPO','FAMILIAS','SUBFAMILIAS'],
   valores:['QUANTIDADE','VALOR LIQUIDO','IVA']
 };
@@ -159,7 +159,7 @@ function calc(){
 function field(container,name){
   const d=document.createElement('div');d.className='field';
   const l=document.createElement('label');
-  l.innerHTML=label(name)+(name==='CLIENTES'||name==='ARTIGO'||name==='QUANTIDADE'||name==='VALOR LIQUIDO'?'<span class="required"> *</span>':'');
+  l.innerHTML=label(name)+(name==='DATA VENDA'||name==='CLIENTES'||name==='ARTIGO'||name==='QUANTIDADE'||name==='VALOR LIQUIDO'?'<span class="required"> *</span>':'');
   d.appendChild(l);
   let el;
   if(listFields.includes(name)){
@@ -169,7 +169,7 @@ function field(container,name){
     d.appendChild(dl);
   }else{
     el=document.createElement('input');
-    el.type=name==='DATA'?'date':numeric.has(name)?'number':'text';
+    el.type=(name==='DATA'||name==='DATA VENDA')?'date':numeric.has(name)?'number':'text';
     if(el.type==='number')el.step=name==='SEMANA'?'1':'any';
   }
   el.id='f-'+name;
@@ -186,7 +186,7 @@ function build(){
   Object.entries(sections).forEach(([id,fs])=>{
     const c=document.getElementById(id);c.innerHTML='';fs.forEach(f=>field(c,f))
   });
-  controls.DATA.value=today();applyAutomaticWeek();applyAutomaticVat();calc();
+  controls.DATA.value=today();controls['DATA VENDA'].value=today();applyAutomaticWeek();applyAutomaticVat();calc();
 }
 function rebuildLists(){
   const previous={};Object.keys(controls).forEach(k=>previous[k]=controls[k]?.value??'');
@@ -228,7 +228,7 @@ function updateMode(){
 }
 function clearForm(showMessage=true){
   Object.values(controls).forEach(x=>x.value='');
-  controls.DATA.value=today();document.getElementById('spainNoVat').checked=false;
+  controls.DATA.value=today();controls['DATA VENDA'].value=today();document.getElementById('spainNoVat').checked=false;
   ivaManual=false;semanaManual=false;editId=null;document.getElementById('rowSearch').value='';
   applyAutomaticWeek();applyAutomaticVat();calc();updateMode();renderRecords();
   if(showMessage)message('Formulário limpo. Modo Nova venda.',true);
@@ -236,7 +236,7 @@ function clearForm(showMessage=true){
 }
 function fromDb(r){
   return {
-    id:r.id, source_key:r.source_key, DATA:r.data_documento||'',
+    id:r.id, source_key:r.source_key, DATA:r.data_documento||'', 'DATA VENDA':r.data_venda||'',
     ANO:r.ano, 'MÊS':r.mes, SEMANA:r.semana,
     CLIENTES:r.cliente||'', CONTRIBUINTE:r.nif||'', DISTRITO:r.distrito||'',
     VENDEDOR:r.vendedor||'', ARTIGO:r.artigo||'', 'DESCRIÇAO':r.descricao||'',
@@ -250,6 +250,7 @@ function toDb(){
   return {
     source_key:SOURCE_KEY,
     data_documento:val('DATA')||null,
+    data_venda:val('DATA VENDA')||null,
     ano:c.ANO, mes:c.MES, semana:c.SEMANA,
     vendedor:val('VENDEDOR').trim()||null,
     cliente:val('CLIENTES').trim()||null,
@@ -322,7 +323,7 @@ function filteredRows(){
 function renderRecords(){
   const all=filteredRows();const max=Math.max(0,all.length-PAGE_SIZE);recordOffset=Math.min(Math.max(0,recordOffset),max);
   const page=all.slice(recordOffset,recordOffset+PAGE_SIZE);const box=document.getElementById('recordsTable');
-  box.innerHTML=page.length?`<table><thead><tr><th>ID</th><th>Data</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
+  box.innerHTML=page.length?`<table><thead><tr><th>ID</th><th>Data documento</th><th>Data venda</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r['DATA VENDA']??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
   box.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>loadDbRow(Number(tr.dataset.id)));
   document.getElementById('recordPage').textContent=all.length?`A mostrar ${recordOffset+1}-${Math.min(recordOffset+PAGE_SIZE,all.length)} de ${all.length}`:'Sem resultados'
 }
@@ -338,8 +339,8 @@ document.getElementById('showPrevious').onclick=()=>{recordOffset=Math.max(0,rec
 document.getElementById('showNext').onclick=()=>{recordOffset+=PAGE_SIZE;renderRecords()};
 
 document.getElementById('save').onclick=async()=>{
-  if(!val('CLIENTES')||!val('ARTIGO')||num('QUANTIDADE')<=0||val('VALOR LIQUIDO')===''){
-    return message('Preenche Cliente, Artigo, Quantidade e Valor Líquido.')
+  if(!val('CLIENTES')||!val('ARTIGO')||num('QUANTIDADE')<=0||val('VALOR LIQUIDO')===''||!val('DATA VENDA')){
+    return message('Preenche Data da Venda, Cliente, Artigo, Quantidade e Valor Líquido.')
   }
   const payload=toDb();
   const btn=document.getElementById('save');btn.disabled=true;
