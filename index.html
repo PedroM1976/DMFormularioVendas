@@ -57,7 +57,7 @@
     </div>
     <div class="recordsbar" style="margin-top:16px">
       <b>Registos no Supabase</b>
-      <input id="recordFilter" placeholder="Pesquisar cliente, artigo, descrição ou vendedor" style="height:38px;min-width:280px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px">
+      <input id="recordFilter" placeholder="Pesquisar cliente, artigo, descrição, vendedor ou técnico" style="height:38px;min-width:280px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px">
       <button class="btn secondary" id="showPrevious">◀ Anteriores</button>
       <button class="btn secondary" id="showNext">Seguintes ▶</button>
       <span class="muted" id="recordPage"></span>
@@ -94,11 +94,11 @@ const SOURCE_KEY='BASE_SAGE';
 
 const sections={
   cliente:['CLIENTES','CONTRIBUINTE','DISTRITO','VENDEDOR'],
-  documento:['DATA','DATA VENDA','SEMANA','AREA DE NEGOCIO'],
+  documento:['DATA','DATA VENDA','SEMANA','AREA DE NEGOCIO','TECNICO'],
   artigo:['ARTIGO','DESCRIÇAO','PCUSTO','GRUPO','FAMILIAS','SUBFAMILIAS'],
   valores:['QUANTIDADE','VALOR LIQUIDO','IVA']
 };
-const listFields=['CLIENTES','DISTRITO','VENDEDOR','ARTIGO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS'];
+const listFields=['CLIENTES','DISTRITO','VENDEDOR','ARTIGO','AREA DE NEGOCIO','TECNICO','GRUPO','FAMILIAS','SUBFAMILIAS'];
 const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','SEMANA']);
 let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false;
 const PAGE_SIZE=25;
@@ -239,7 +239,7 @@ function fromDb(r){
     id:r.id, source_key:r.source_key, DATA:r.data_documento||'', 'DATA VENDA':r.data_venda||'',
     ANO:r.ano, 'MÊS':r.mes, SEMANA:r.semana,
     CLIENTES:r.cliente||'', CONTRIBUINTE:r.nif||'', DISTRITO:r.distrito||'',
-    VENDEDOR:r.vendedor||'', ARTIGO:r.artigo||'', 'DESCRIÇAO':r.descricao||'',
+    VENDEDOR:r.vendedor||'', TECNICO:r.tecnico||'', ARTIGO:r.artigo||'', 'DESCRIÇAO':r.descricao||'',
     QUANTIDADE:r.quantidade, 'VALOR LIQUIDO':r.valor_liquido, IVA:r.iva,
     'VALOR TOTAL':r.valor_total, PCUSTO:r.pcusto, MARGEM:r.margem,
     'AREA DE NEGOCIO':r.area||'', GRUPO:r.grupo||'', FAMILIAS:r.familia||'', SUBFAMILIAS:r.subfamilia||''
@@ -253,6 +253,7 @@ function toDb(){
     data_venda:val('DATA VENDA')||null,
     ano:c.ANO, mes:c.MES, semana:c.SEMANA,
     vendedor:val('VENDEDOR').trim()||null,
+    tecnico:val('TECNICO').trim()||null,
     cliente:val('CLIENTES').trim()||null,
     nif:val('CONTRIBUINTE').trim()||null,
     artigo:val('ARTIGO').trim()||null,
@@ -318,12 +319,12 @@ function loadDbRow(id){
 function filteredRows(){
   const q=document.getElementById('recordFilter').value.trim().toLowerCase();
   if(!q)return rows;
-  return rows.filter(r=>[r.id,r.CLIENTES,r.ARTIGO,r['DESCRIÇAO'],r.VENDEDOR].some(v=>String(v??'').toLowerCase().includes(q)))
+  return rows.filter(r=>[r.id,r.CLIENTES,r.ARTIGO,r['DESCRIÇAO'],r.VENDEDOR,r.TECNICO].some(v=>String(v??'').toLowerCase().includes(q)))
 }
 function renderRecords(){
   const all=filteredRows();const max=Math.max(0,all.length-PAGE_SIZE);recordOffset=Math.min(Math.max(0,recordOffset),max);
   const page=all.slice(recordOffset,recordOffset+PAGE_SIZE);const box=document.getElementById('recordsTable');
-  box.innerHTML=page.length?`<table><thead><tr><th>ID</th><th>Data documento</th><th>Data venda</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r['DATA VENDA']??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
+  box.innerHTML=page.length?`<table><thead><tr><th>ID</th><th>Data documento</th><th>Data venda</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th><th>Técnico</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r['DATA VENDA']??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td><td>${r.TECNICO??''}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
   box.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>loadDbRow(Number(tr.dataset.id)));
   document.getElementById('recordPage').textContent=all.length?`A mostrar ${recordOffset+1}-${Math.min(recordOffset+PAGE_SIZE,all.length)} de ${all.length}`:'Sem resultados'
 }
