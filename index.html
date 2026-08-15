@@ -30,6 +30,7 @@
 .records table{width:100%;border-collapse:collapse;font-size:13px}.records th,.records td{padding:8px 10px;border-bottom:1px solid #e3eaec;text-align:left;white-space:nowrap}
 .records th{position:sticky;top:0;background:#edf6f7;z-index:1}.records tr:hover{background:#f4fafb;cursor:pointer}.records .active{background:#fff0c7}
 .muted{color:#60737a}.recordsbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.bulkbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:10px 0;padding:12px;background:#edf6f7;border:1px solid #cfe2e6;border-radius:9px}.bulkbar .field{min-width:180px}.bulkbar .field.grow{flex:1;min-width:220px}.bulkcount{font-weight:700;padding:10px 12px;background:white;border-radius:8px;border:1px solid #d8e2e5}.records th.sel,.records td.sel{width:42px;text-align:center}.records input.rowSelect{width:18px;height:18px;cursor:pointer}.btn:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:850px){.lookup{grid-template-columns:1fr 1fr}.lookup .mode{grid-column:1/-1}.grid{grid-template-columns:1fr 1fr}.calc{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.lookup{grid-template-columns:1fr}.grid,.calc{grid-template-columns:1fr}.actions .btn{width:100%}}
 </style>
@@ -62,6 +63,34 @@
       <button class="btn secondary" id="showPrevious">◀ Anteriores</button>
       <button class="btn secondary" id="showNext">Seguintes ▶</button>
       <span class="muted" id="recordPage"></span>
+    </div>
+    <div class="bulkbar">
+      <button class="btn secondary" id="selectFiltered">Selecionar todos os filtrados</button>
+      <button class="btn secondary" id="clearSelection">Limpar seleção</button>
+      <span class="bulkcount" id="selectedCount">0 selecionados</span>
+      <div class="field">
+        <label>Campo a editar em massa</label>
+        <select id="bulkField">
+          <option value="">Escolher campo…</option>
+          <option value="FORNECEDOR">Fornecedor</option>
+          <option value="TECNICO">Técnico</option>
+          <option value="VENDEDOR">Vendedor</option>
+          <option value="PCUSTO">Preço de Custo</option>
+          <option value="DISTRITO">Distrito</option>
+          <option value="DATA VENDA">Data da Venda</option>
+          <option value="SEMANA">Semana</option>
+          <option value="ESPANHA_SEM_IVA">Venda para Espanha — sem IVA</option>
+        </select>
+      </div>
+      <div class="field grow">
+        <label>Novo valor</label>
+        <input id="bulkValue" placeholder="Introduza o novo valor">
+        <select id="bulkSpainValue" style="display:none;width:100%;height:42px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px;background:white;font-size:15px">
+          <option value="1">Sim — sem IVA</option>
+          <option value="0">Não — calcular IVA a 23%</option>
+        </select>
+      </div>
+      <button class="btn primary" id="applyBulk">Aplicar aos selecionados</button>
     </div>
     <div class="records" id="recordsTable"><div class="muted" style="padding:14px">A carregar registos…</div></div>
   </div>
@@ -102,6 +131,7 @@ const sections={
 const listFields=['CLIENTES','DISTRITO','VENDEDOR','ARTIGO','FORNECEDOR','AREA DE NEGOCIO','TECNICO','GRUPO','FAMILIAS','SUBFAMILIAS'];
 const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','SEMANA']);
 let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false;
+let selectedIds=new Set();
 const PAGE_SIZE=25;
 // Em modo de edição, apenas estes campos podem ser alterados.
 const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA']);
@@ -332,7 +362,7 @@ function loadDbRow(id){
   document.getElementById('spainNoVat').checked=Number(obj.IVA||0)===0;
   ivaManual=true;semanaManual=true;document.getElementById('rowSearch').value=id;
   calc();updateMode();renderRecords();
-  message(`Venda ID ${id} carregada. Pode editar Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito e Venda para Espanha.`,true);
+  message(`Venda ID ${id} carregada. Pode editar Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito, Data da Venda, Semana e Venda para Espanha.`,true);
   window.scrollTo({top:document.getElementById('cliente').closest('.card').offsetTop-15,behavior:'smooth'})
 }
 function filteredRows(){
@@ -340,12 +370,22 @@ function filteredRows(){
   if(!q)return rows;
   return rows.filter(r=>[r.id,r.CLIENTES,r.ARTIGO,r['DESCRIÇAO'],r.FORNECEDOR,r.VENDEDOR,r.TECNICO].some(v=>String(v??'').toLowerCase().includes(q)))
 }
+function updateSelectedCount(){
+  const n=selectedIds.size;
+  document.getElementById('selectedCount').textContent=`${n} selecionado${n===1?'':'s'}`;
+  document.getElementById('applyBulk').disabled=n===0;
+}
+function selectedFilteredRows(){
+  return filteredRows().filter(r=>selectedIds.has(Number(r.id)));
+}
 function renderRecords(){
   const all=filteredRows();const max=Math.max(0,all.length-PAGE_SIZE);recordOffset=Math.min(Math.max(0,recordOffset),max);
   const page=all.slice(recordOffset,recordOffset+PAGE_SIZE);const box=document.getElementById('recordsTable');
-  box.innerHTML=page.length?`<table><thead><tr><th>ID</th><th>Data documento</th><th>Data venda</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Fornecedor</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th><th>Técnico</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r['DATA VENDA']??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.FORNECEDOR??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td><td>${r.TECNICO??''}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
-  box.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>loadDbRow(Number(tr.dataset.id)));
-  document.getElementById('recordPage').textContent=all.length?`A mostrar ${recordOffset+1}-${Math.min(recordOffset+PAGE_SIZE,all.length)} de ${all.length}`:'Sem resultados'
+  box.innerHTML=page.length?`<table><thead><tr><th class="sel">Sel.</th><th>ID</th><th>Data documento</th><th>Data venda</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Fornecedor</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th><th>Técnico</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td class="sel"><input class="rowSelect" type="checkbox" data-id="${r.id}" ${selectedIds.has(Number(r.id))?'checked':''}></td><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r['DATA VENDA']??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.FORNECEDOR??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td><td>${r.TECNICO??''}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
+  box.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=e=>{if(e.target.closest('.rowSelect'))return;loadDbRow(Number(tr.dataset.id))});
+  box.querySelectorAll('.rowSelect').forEach(cb=>cb.onchange=()=>{const id=Number(cb.dataset.id);cb.checked?selectedIds.add(id):selectedIds.delete(id);updateSelectedCount()});
+  document.getElementById('recordPage').textContent=all.length?`A mostrar ${recordOffset+1}-${Math.min(recordOffset+PAGE_SIZE,all.length)} de ${all.length}`:'Sem resultados';
+  updateSelectedCount();
 }
 
 document.getElementById('spainNoVat').addEventListener('change',()=>{ivaManual=false;applyAutomaticVat();calc()});
@@ -357,6 +397,79 @@ document.getElementById('rowSearch').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('recordFilter').addEventListener('input',()=>{recordOffset=0;renderRecords()});
 document.getElementById('showPrevious').onclick=()=>{recordOffset=Math.max(0,recordOffset-PAGE_SIZE);renderRecords()};
 document.getElementById('showNext').onclick=()=>{recordOffset+=PAGE_SIZE;renderRecords()};
+
+document.getElementById('selectFiltered').onclick=()=>{
+  const all=filteredRows();
+  if(!all.length)return message('Não existem linhas no filtro atual para selecionar.');
+  all.forEach(r=>selectedIds.add(Number(r.id)));
+  renderRecords();
+  message(`${all.length} linha(s) do filtro selecionada(s).`,true);
+};
+document.getElementById('clearSelection').onclick=()=>{selectedIds.clear();renderRecords();message('Seleção limpa.',true)};
+document.getElementById('bulkField').onchange=()=>{
+  const field=document.getElementById('bulkField').value;
+  const input=document.getElementById('bulkValue');
+  const spain=document.getElementById('bulkSpainValue');
+  spain.style.display=field==='ESPANHA_SEM_IVA'?'block':'none';
+  input.style.display=field==='ESPANHA_SEM_IVA'?'none':'block';
+  input.value='';
+  input.type=field==='DATA VENDA'?'date':(field==='PCUSTO'||field==='SEMANA'?'number':'text');
+  input.step=field==='SEMANA'?'1':'any';
+  input.placeholder=field==='PCUSTO'?'Ex.: 125.50':field==='SEMANA'?'Ex.: 32':'Introduza o novo valor';
+};
+
+document.getElementById('applyBulk').onclick=async()=>{
+  const ids=[...selectedIds];
+  if(!ids.length)return message('Seleciona primeiro as linhas que queres alterar.');
+  const field=document.getElementById('bulkField').value;
+  if(!field)return message('Escolhe o campo que queres editar em massa.');
+  const input=document.getElementById('bulkValue');
+  let value=input.value;
+  if(field!=='ESPANHA_SEM_IVA' && value==='')return message('Introduz o novo valor a aplicar.');
+
+  const names={FORNECEDOR:'Fornecedor',TECNICO:'Técnico',VENDEDOR:'Vendedor',PCUSTO:'Preço de Custo',DISTRITO:'Distrito','DATA VENDA':'Data da Venda',SEMANA:'Semana',ESPANHA_SEM_IVA:'Venda para Espanha'};
+  const shownValue=field==='ESPANHA_SEM_IVA'?(document.getElementById('bulkSpainValue').value==='1'?'Sim — sem IVA':'Não — IVA 23%'):value;
+  if(!confirm(`Confirmar alteração de ${ids.length} linha(s)?\n\nCampo: ${names[field]}\nNovo valor: ${shownValue}\n\nEsta alteração será gravada diretamente no Supabase.`))return;
+
+  const btn=document.getElementById('applyBulk');btn.disabled=true;
+  try{
+    if(field==='ESPANHA_SEM_IVA'){
+      const semIva=document.getElementById('bulkSpainValue').value==='1';
+      // O valor total depende do valor líquido de cada linha, por isso atualizamos em grupos por valor calculado.
+      for(const id of ids){
+        const r=rows.find(x=>Number(x.id)===id); if(!r)continue;
+        const liquido=Number(r['VALOR LIQUIDO'])||0;
+        const iva=semIva?0:liquido*0.23;
+        await api(`${TABLE}?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({iva,valor_total:liquido+iva,updated_at:new Date().toISOString()}),prefer:'return=minimal'});
+      }
+    }else{
+      const payload={updated_at:new Date().toISOString()};
+      if(field==='FORNECEDOR')payload.Fornecedor=value.trim()||null;
+      if(field==='TECNICO')payload.tecnico=value.trim()||null;
+      if(field==='VENDEDOR')payload.vendedor=value.trim()||null;
+      if(field==='DISTRITO')payload.distrito=value.trim()||null;
+      if(field==='DATA VENDA')payload.data_venda=value||null;
+      if(field==='SEMANA'){
+        const n=Number(value); if(!Number.isInteger(n)||n<1||n>53)throw new Error('A semana deve ser um número inteiro entre 1 e 53.');
+        payload.semana=n;
+      }
+      if(field==='PCUSTO'){
+        const n=Number(String(value).replace(',','.')); if(!Number.isFinite(n))throw new Error('Introduz um preço de custo válido.');
+        payload.pcusto=n; payload.margem=n;
+      }
+      const idList=ids.join(',');
+      await api(`${TABLE}?id=in.(${idList})`,{method:'PATCH',body:JSON.stringify(payload),prefer:'return=minimal'});
+    }
+    sessionSaved+=ids.length;
+    await loadAllRows();
+    selectedIds.clear();
+    renderRecords();
+    message(`${ids.length} linha(s) atualizada(s) no Supabase — ${names[field]} alterado para ${shownValue}.`,true);
+    updateStatus();
+  }catch(e){
+    message('Erro na edição em massa: '+(e.message||e));
+  }finally{btn.disabled=false;updateSelectedCount()}
+};
 
 document.getElementById('save').onclick=async()=>{
   let payload;
