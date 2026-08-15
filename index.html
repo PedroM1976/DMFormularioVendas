@@ -14,6 +14,7 @@
 .field label{font-size:13px;font-weight:700;display:block;margin-bottom:6px}
 .field input,.field select{width:100%;height:42px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px;background:white;font-size:15px}
 .field input:focus,.field select:focus{outline:2px solid #55aebe;border-color:#55aebe}
+.field input[readonly]{background:#eef2f3;color:#6a7a80;cursor:not-allowed}.switchbox.locked{opacity:.65}
 .btn{border:0;border-radius:9px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:15px}
 .primary{background:#0f6674;color:white}.secondary{background:#e7eff1;color:#18323b}.danger{background:#a93434;color:#fff}
 .status{margin-top:10px;background:#ffffff22;padding:10px;border-radius:8px}
@@ -102,6 +103,8 @@ const listFields=['CLIENTES','DISTRITO','VENDEDOR','ARTIGO','FORNECEDOR','AREA D
 const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','SEMANA']);
 let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false;
 const PAGE_SIZE=25;
+// Em modo de edição, apenas estes campos podem ser alterados.
+const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO']);
 
 function today(){return new Date().toISOString().slice(0,10)}
 function label(x){return x.replaceAll('_',' ')}
@@ -216,6 +219,17 @@ function updateStatus(){
   document.getElementById('sessionCount').textContent=`Alterações nesta sessão: ${sessionSaved}`;
   document.getElementById('status').textContent=`Supabase ligado — ${rows.length} registos carregados — ${sessionSaved} alteração(ões) nesta sessão`;
 }
+function applyEditPermissions(){
+  const editing=!!editId;
+  Object.entries(controls).forEach(([name,el])=>{
+    // Nova venda: todos os campos ficam livres. Edição: só os campos autorizados.
+    el.readOnly=editing && !EDITABLE_FIELDS.has(name);
+  });
+  const spain=document.getElementById('spainNoVat');
+  spain.disabled=false; // Vendas para Espanha é sempre editável.
+  spain.closest('.switchbox')?.classList.toggle('locked',false);
+}
+
 function updateMode(){
   const m=document.getElementById('modeLabel');
   if(editId){
@@ -225,6 +239,7 @@ function updateMode(){
     m.textContent='Modo: Nova venda';m.className='mode';
     document.getElementById('save').textContent='Guardar no Supabase'
   }
+  applyEditPermissions();
 }
 function clearForm(showMessage=true){
   Object.values(controls).forEach(x=>x.value='');
@@ -311,10 +326,13 @@ function loadDbRow(id){
   editId=id;
   Object.keys(controls).forEach(h=>{if(controls[h])controls[h].value=obj[h]??''});
   if(!controls.DATA.value && obj.ANO && obj['MÊS'])controls.DATA.value=`${obj.ANO}-${String(obj['MÊS']).padStart(2,'0')}-01`;
+  // Compatibilidade com registos antigos: alguns têm apenas uma das datas preenchida.
+  if(!controls['DATA VENDA'].value && controls.DATA.value)controls['DATA VENDA'].value=controls.DATA.value;
+  if(!controls.DATA.value && controls['DATA VENDA'].value)controls.DATA.value=controls['DATA VENDA'].value;
   document.getElementById('spainNoVat').checked=Number(obj.IVA||0)===0;
   ivaManual=true;semanaManual=true;document.getElementById('rowSearch').value=id;
   calc();updateMode();renderRecords();
-  message(`Venda ID ${id} carregada para edição.`,true);
+  message(`Venda ID ${id} carregada. Pode editar Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito e Venda para Espanha.`,true);
   window.scrollTo({top:document.getElementById('cliente').closest('.card').offsetTop-15,behavior:'smooth'})
 }
 function filteredRows(){
@@ -341,10 +359,32 @@ document.getElementById('showPrevious').onclick=()=>{recordOffset=Math.max(0,rec
 document.getElementById('showNext').onclick=()=>{recordOffset+=PAGE_SIZE;renderRecords()};
 
 document.getElementById('save').onclick=async()=>{
-  if(!val('CLIENTES')||!val('ARTIGO')||num('QUANTIDADE')<=0||val('VALOR LIQUIDO')===''||!val('DATA VENDA')){
-    return message('Preenche Data da Venda, Cliente, Artigo, Quantidade e Valor Líquido.')
+  let payload;
+
+  if(editId){
+    // Nos registos existentes gravamos APENAS os campos autorizados.
+    // Assim, vendas antigas com outros campos vazios continuam a poder ser corrigidas.
+    const liquido=num('VALOR LIQUIDO');
+    const iva=document.getElementById('spainNoVat').checked ? 0 : liquido*0.23;
+    payload={
+      Fornecedor:val('FORNECEDOR').trim()||null,
+      tecnico:val('TECNICO').trim()||null,
+      vendedor:val('VENDEDOR').trim()||null,
+      pcusto:num('PCUSTO'),
+      distrito:val('DISTRITO').trim()||null,
+      iva:iva,
+      valor_total:liquido+iva,
+      updated_at:new Date().toISOString()
+    };
+  }else{
+    // Nova venda: mantém a validação normal do formulário.
+    if(!val('DATA VENDA') && val('DATA'))controls['DATA VENDA'].value=val('DATA');
+    if(!val('CLIENTES')||!val('ARTIGO')||val('QUANTIDADE')===''||val('VALOR LIQUIDO')===''||!val('DATA VENDA')){
+      return message('Preenche Data da Venda, Cliente, Artigo, Quantidade e Valor Líquido.')
+    }
+    payload=toDb();
   }
-  const payload=toDb();
+
   const btn=document.getElementById('save');btn.disabled=true;
   try{
     if(editId){
