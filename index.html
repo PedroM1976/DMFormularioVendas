@@ -104,7 +104,7 @@ const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','SEMANA']);
 let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false;
 const PAGE_SIZE=25;
 // Em modo de edição, apenas estes campos podem ser alterados.
-const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO']);
+const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA']);
 
 function today(){return new Date().toISOString().slice(0,10)}
 function label(x){return x.replaceAll('_',' ')}
@@ -371,7 +371,10 @@ document.getElementById('save').onclick=async()=>{
       tecnico:val('TECNICO').trim()||null,
       vendedor:val('VENDEDOR').trim()||null,
       pcusto:num('PCUSTO'),
+      margem:num('PCUSTO'),
       distrito:val('DISTRITO').trim()||null,
+      data_venda:val('DATA VENDA')||null,
+      semana:val('SEMANA')===''?null:Math.trunc(num('SEMANA')),
       iva:iva,
       valor_total:liquido+iva,
       updated_at:new Date().toISOString()
@@ -397,7 +400,7 @@ document.getElementById('save').onclick=async()=>{
       const id=editId;
       await loadAllRows();
       loadDbRow(id);
-      message(`Venda ID ${id} atualizada no Supabase.`,true)
+      message(`Venda ID ${id} atualizada no Supabase — todas as alterações editáveis foram gravadas.`,true)
     }else{
       payload.created_at=new Date().toISOString();
       const created=await api(TABLE,{
