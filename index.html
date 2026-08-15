@@ -239,7 +239,7 @@ function fromDb(r){
     id:r.id, source_key:r.source_key, DATA:r.data_documento||'', 'DATA VENDA':r.data_venda||'',
     ANO:r.ano, 'MÊS':r.mes, SEMANA:r.semana,
     CLIENTES:r.cliente||'', CONTRIBUINTE:r.nif||'', DISTRITO:r.distrito||'',
-    VENDEDOR:r.vendedor||'', TECNICO:r.tecnico||'', ARTIGO:r.artigo||'', 'DESCRIÇAO':r.descricao||'', FORNECEDOR:r.fornecedor||'',
+    VENDEDOR:r.vendedor||'', TECNICO:r.tecnico||'', ARTIGO:r.artigo||'', 'DESCRIÇAO':r.descricao||'', FORNECEDOR:r.Fornecedor??r.fornecedor??'',
     QUANTIDADE:r.quantidade, 'VALOR LIQUIDO':r.valor_liquido, IVA:r.iva,
     'VALOR TOTAL':r.valor_total, PCUSTO:r.pcusto, MARGEM:r.margem,
     'AREA DE NEGOCIO':r.area||'', GRUPO:r.grupo||'', FAMILIAS:r.familia||'', SUBFAMILIAS:r.subfamilia||''
@@ -258,7 +258,7 @@ function toDb(){
     nif:val('CONTRIBUINTE').trim()||null,
     artigo:val('ARTIGO').trim()||null,
     descricao:val('DESCRIÇAO').trim()||null,
-    fornecedor:val('FORNECEDOR').trim()||null,
+    Fornecedor:val('FORNECEDOR').trim()||null,
     quantidade:num('QUANTIDADE'),
     valor_liquido:num('VALOR LIQUIDO'),
     iva:num('IVA'),
