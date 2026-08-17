@@ -79,6 +79,10 @@
           <option value="DISTRITO">Distrito</option>
           <option value="DATA VENDA">Data da Venda</option>
           <option value="SEMANA">Semana</option>
+          <option value="AREA DE NEGOCIO">Área de Negócio</option>
+          <option value="GRUPO">Grupo</option>
+          <option value="FAMILIAS">Família</option>
+          <option value="SUBFAMILIAS">Subfamília</option>
           <option value="ESPANHA_SEM_IVA">Venda para Espanha — sem IVA</option>
         </select>
       </div>
@@ -134,7 +138,7 @@ let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId
 let selectedIds=new Set();
 const PAGE_SIZE=25;
 // Em modo de edição, apenas estes campos podem ser alterados.
-const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA']);
+const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS']);
 
 function today(){return new Date().toISOString().slice(0,10)}
 function label(x){return x.replaceAll('_',' ')}
@@ -362,7 +366,7 @@ function loadDbRow(id){
   document.getElementById('spainNoVat').checked=Number(obj.IVA||0)===0;
   ivaManual=true;semanaManual=true;document.getElementById('rowSearch').value=id;
   calc();updateMode();renderRecords();
-  message(`Venda ID ${id} carregada. Pode editar Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito, Data da Venda, Semana e Venda para Espanha.`,true);
+  message(`Venda ID ${id} carregada. Pode editar Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito, Data da Venda, Semana, Área de Negócio, Grupo, Família, Subfamília e Venda para Espanha.`,true);
   window.scrollTo({top:document.getElementById('cliente').closest('.card').offsetTop-15,behavior:'smooth'})
 }
 function filteredRows(){
@@ -434,7 +438,7 @@ document.getElementById('applyBulk').onclick=async()=>{
   let value=input.value;
   if(field!=='ESPANHA_SEM_IVA' && value==='')return message('Introduz o novo valor a aplicar.');
 
-  const names={FORNECEDOR:'Fornecedor',TECNICO:'Técnico',VENDEDOR:'Vendedor',PCUSTO:'Preço de Custo',DISTRITO:'Distrito','DATA VENDA':'Data da Venda',SEMANA:'Semana',ESPANHA_SEM_IVA:'Venda para Espanha'};
+  const names={FORNECEDOR:'Fornecedor',TECNICO:'Técnico',VENDEDOR:'Vendedor',PCUSTO:'Preço de Custo',DISTRITO:'Distrito','DATA VENDA':'Data da Venda',SEMANA:'Semana','AREA DE NEGOCIO':'Área de Negócio',GRUPO:'Grupo',FAMILIAS:'Família',SUBFAMILIAS:'Subfamília',ESPANHA_SEM_IVA:'Venda para Espanha'};
   const shownValue=field==='ESPANHA_SEM_IVA'?(document.getElementById('bulkSpainValue').value==='1'?'Sim — sem IVA':'Não — IVA 23%'):value;
   if(!confirm(`Confirmar alteração de ${ids.length} linha(s)?\n\nCampo: ${names[field]}\nNovo valor: ${shownValue}\n\nEsta alteração será gravada diretamente no Supabase.`))return;
 
@@ -455,6 +459,10 @@ document.getElementById('applyBulk').onclick=async()=>{
       if(field==='TECNICO')payload.tecnico=value.trim()||null;
       if(field==='VENDEDOR')payload.vendedor=value.trim()||null;
       if(field==='DISTRITO')payload.distrito=value.trim()||null;
+       if(field==='AREA DE NEGOCIO')payload.area=value.trim()||null;
+       if(field==='GRUPO')payload.grupo=value.trim()||null;
+       if(field==='FAMILIAS')payload.familia=value.trim()||null;
+       if(field==='SUBFAMILIAS')payload.subfamilia=value.trim()||null;
       if(field==='DATA VENDA')payload.data_venda=value||null;
       if(field==='SEMANA'){
         const n=Number(value); if(!Number.isInteger(n)||n<1||n>53)throw new Error('A semana deve ser um número inteiro entre 1 e 53.');
