@@ -368,7 +368,14 @@ function loadDbRow(id){
 function filteredRows(){
   const q=document.getElementById('recordFilter').value.trim().toLowerCase();
   if(!q)return rows;
-  return rows.filter(r=>[r.id,r.CLIENTES,r.ARTIGO,r['DESCRIÇAO'],r.FORNECEDOR,r.VENDEDOR,r.TECNICO].some(v=>String(v??'').toLowerCase().includes(q)))
+  return rows.filter(r=>[r.id,r.CLIENTES,r.ARTIGO,r['DESCRIÇAO'],r.FORNECEDOR,r.VENDEDOR,r.TECNICO].some(v=>{
+    const text=String(v??'').trim().toLowerCase();
+    if(!text)return false;
+    // Pesquisa por palavras completas. Ex.: 'portes' encontra 'PORTES' e 'PORTES DE ENVIO',
+    // mas evita correspondências acidentais dentro de outras palavras/campos.
+    const words=text.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    return words.includes(q) || text===q;
+  }))
 }
 function updateSelectedCount(){
   const n=selectedIds.size;
