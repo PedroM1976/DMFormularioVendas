@@ -40,7 +40,7 @@
 .primary{background:linear-gradient(135deg,#0f6674,#16889a)}.secondary{background:#f0f6f7;border:1px solid #d2e2e5}.danger{background:linear-gradient(135deg,#a93434,#c84b4b)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:7px;background:#e8f0f2;border-radius:14px;position:sticky;top:8px;z-index:20;box-shadow:0 7px 22px #15323912}
 .tabbtn{flex:1;min-width:170px;border:0;border-radius:10px;padding:12px 15px;background:transparent;color:#36535b;font-weight:800;cursor:pointer}.tabbtn.active{background:#fff;color:#0f6674;box-shadow:0 3px 12px #15323917}
-.tab-panel{display:none}.tab-panel.active{display:block}.filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.filters .field select{height:42px}
+.tab-panel{display:none}.tab-panel.active{display:block}.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.filters .field select{height:42px}
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:14px 0}.kpi{padding:16px;border:1px solid #d8e5e8;border-radius:14px;background:linear-gradient(180deg,#fff,#f8fbfc)}.kpi b{display:block;font-size:24px;color:#0f6674;margin-top:4px}.kpi span{font-size:12px;color:#60737a;font-weight:700}
 .quality-table{overflow:auto;max-height:420px;border:1px solid #d8e2e5;border-radius:12px}.quality-table table{width:100%;border-collapse:collapse;font-size:13px}.quality-table th,.quality-table td{padding:9px 10px;border-bottom:1px solid #e5ecee;text-align:left;white-space:nowrap}.quality-table th{position:sticky;top:0;background:#edf6f7;z-index:2}.quality-table tr.warn{background:#fff8e5}.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-weight:800;font-size:11px}.badge.ok{background:#dff3e6;color:#176337}.badge.warn{background:#fff0c7;color:#7a5700}.badge.bad{background:#f8dddd;color:#8b1c1c}
 .barlist{display:grid;gap:10px}.barrow{display:grid;grid-template-columns:minmax(140px,240px) 1fr 90px;gap:10px;align-items:center}.bartrack{height:13px;background:#e8eff1;border-radius:999px;overflow:hidden}.barfill{height:100%;background:linear-gradient(90deg,#0f6674,#44aabd);border-radius:999px}.barlabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.barvalue{text-align:right;font-weight:800;color:#36535b}.split2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.section-title{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.mutedbox{padding:12px 14px;border-radius:10px;background:#f2f6f7;color:#547079;font-size:13px}
@@ -151,6 +151,9 @@
         <div class="field"><label>Distrito</label><select id="hfDistrict"><option value="">Todos</option></select></div>
         <div class="field"><label>Fornecedor</label><select id="hfSupplier"><option value="">Todos</option></select></div>
         <div class="field"><label>Área de Negócio</label><select id="hfArea"><option value="">Todas</option></select></div>
+        <div class="field"><label>Ano</label><select id="hfYear"><option value="">Todos</option></select></div>
+        <div class="field"><label>Mês</label><select id="hfMonth"><option value="">Todos</option></select></div>
+        <div class="field"><label>Semana</label><select id="hfWeek"><option value="">Todas</option></select></div>
       </div>
       <div class="recordsbar" style="margin-top:12px"><select id="hfStatus" style="height:38px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px"><option value="">Todos os estados</option><option value="ok">✓ Conforme</option><option value="warn">⚠ Verificar</option></select><input id="hfSearch" placeholder="Pesquisar ID, cliente, artigo, descrição..." style="height:38px;min-width:280px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px"><button class="btn secondary" id="clearHistoryFilters">Limpar filtros</button><span class="muted" id="historyCount"></span></div>
       <div class="kpis" id="historyKpis"></div>
@@ -523,9 +526,42 @@ function rowReview(r,patterns){
   return {ok:st.conforme,reasons,missing:st.faltam};
 }
 function fillSelect(id,field){const el=document.getElementById(id);const cur=el.value;el.innerHTML='<option value="">Todos</option>'+unique(field).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');el.value=cur}
-function rebuildHistoryFilters(){fillSelect('hfClient','CLIENTES');fillSelect('hfArticle','ARTIGO');fillSelect('hfDistrict','DISTRITO');fillSelect('hfSupplier','FORNECEDOR');fillSelect('hfArea','AREA DE NEGOCIO')}
+function fillNumericSelect(id,field,allLabel='Todos'){
+  const el=document.getElementById(id),cur=el.value;
+  const vals=[...new Set(rows.map(r=>r[field]).filter(v=>v!==null&&v!==undefined&&String(v).trim()!==''))]
+    .sort((a,b)=>Number(a)-Number(b));
+  el.innerHTML=`<option value="">${allLabel}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  el.value=cur;
+}
+function fillMonthSelect(){
+  const el=document.getElementById('hfMonth'),cur=el.value;
+  const nomes=['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const vals=[...new Set(rows.map(r=>r['MÊS']).filter(v=>v!==null&&v!==undefined&&String(v).trim()!==''))]
+    .map(Number).filter(v=>v>=1&&v<=12).sort((a,b)=>a-b);
+  el.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option value="${v}">${String(v).padStart(2,'0')} · ${nomes[v]}</option>`).join('');
+  el.value=cur;
+}
+function rebuildHistoryFilters(){
+  fillSelect('hfClient','CLIENTES');
+  fillSelect('hfArticle','ARTIGO');
+  fillSelect('hfDistrict','DISTRITO');
+  fillSelect('hfSupplier','FORNECEDOR');
+  fillSelect('hfArea','AREA DE NEGOCIO');
+  fillNumericSelect('hfYear','ANO');
+  fillMonthSelect();
+  fillNumericSelect('hfWeek','SEMANA','Todas');
+}
 function historyRows(){
-  const vals={CLIENTES:document.getElementById('hfClient').value,ARTIGO:document.getElementById('hfArticle').value,DISTRITO:document.getElementById('hfDistrict').value,FORNECEDOR:document.getElementById('hfSupplier').value,'AREA DE NEGOCIO':document.getElementById('hfArea').value};
+  const vals={
+    CLIENTES:document.getElementById('hfClient').value,
+    ARTIGO:document.getElementById('hfArticle').value,
+    DISTRITO:document.getElementById('hfDistrict').value,
+    FORNECEDOR:document.getElementById('hfSupplier').value,
+    'AREA DE NEGOCIO':document.getElementById('hfArea').value,
+    ANO:document.getElementById('hfYear').value,
+    'MÊS':document.getElementById('hfMonth').value,
+    SEMANA:document.getElementById('hfWeek').value
+  };
   const q=document.getElementById('hfSearch').value.trim().toLowerCase(),status=document.getElementById('hfStatus').value,patterns=articlePatternMap();
   return rows.filter(r=>Object.entries(vals).every(([f,v])=>!v||String(r[f]??'')===v)).filter(r=>!q||[r.id,r.CLIENTES,r.ARTIGO,r['DESCRIÇAO'],r.FORNECEDOR,r.DISTRITO,r.VENDEDOR,r.TECNICO].some(v=>String(v??'').toLowerCase().includes(q))).filter(r=>{if(!status)return true;const rev=rowReview(r,patterns);return status==='ok'?rev.ok:!rev.ok})
 }
@@ -552,8 +588,8 @@ function renderSummary(){
 }
 function switchTab(name){document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-'+name).classList.add('active');if(name==='history')renderHistory();if(name==='summary')renderSummary();window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-['hfClient','hfArticle','hfDistrict','hfSupplier','hfArea','hfStatus'].forEach(id=>document.getElementById(id).onchange=renderHistory);document.getElementById('hfSearch').oninput=renderHistory;
-document.getElementById('clearHistoryFilters').onclick=()=>{['hfClient','hfArticle','hfDistrict','hfSupplier','hfArea','hfStatus','hfSearch'].forEach(id=>document.getElementById(id).value='');renderHistory()};
+['hfClient','hfArticle','hfDistrict','hfSupplier','hfArea','hfYear','hfMonth','hfWeek','hfStatus'].forEach(id=>document.getElementById(id).onchange=renderHistory);document.getElementById('hfSearch').oninput=renderHistory;
+document.getElementById('clearHistoryFilters').onclick=()=>{['hfClient','hfArticle','hfDistrict','hfSupplier','hfArea','hfYear','hfMonth','hfWeek','hfStatus','hfSearch'].forEach(id=>document.getElementById(id).value='');renderHistory()};
 function csvCell(v){const s=String(v??'');return /[;"\n]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
 document.getElementById('exportCsv').onclick=()=>{const data=historyRows(),patterns=articlePatternMap(),cols=['id','DATA VENDA','CLIENTES','ARTIGO','DESCRIÇAO','FORNECEDOR','DISTRITO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','QUANTIDADE','VALOR LIQUIDO','PCUSTO','VENDEDOR','TECNICO'];const lines=[['ESTADO',...cols.map(c=>COLUMN_LABELS[c]||c)].map(csvCell).join(';'),...data.map(r=>[rowReview(r,patterns).ok?'Conforme':'Verificar',...cols.map(c=>r[c]??'')].map(csvCell).join(';'))];const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='historico_conferencia_vendas.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 document.getElementById('exportPdf').onclick=()=>{document.body.classList.add('print-history');window.print();setTimeout(()=>document.body.classList.remove('print-history'),500)};window.addEventListener('afterprint',()=>document.body.classList.remove('print-history'));
