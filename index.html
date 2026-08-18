@@ -95,6 +95,8 @@
         <label>Campo a editar em massa</label>
         <select id="bulkField">
           <option value="">Escolher campo…</option>
+          <option value="GRUPO DE CLIENTE">Grupo de Cliente</option>
+          <option value="ASSOCIADO">Associado</option>
           <option value="FORNECEDOR">Fornecedor</option>
           <option value="TECNICO">Técnico</option>
           <option value="VENDEDOR">Vendedor</option>
@@ -183,12 +185,12 @@ const TABLE='vendas';
 const SOURCE_KEY='BASE_SAGE';
 
 const sections={
-  cliente:['CLIENTES','CONTRIBUINTE','DISTRITO','VENDEDOR'],
+  cliente:['CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','CONTRIBUINTE','DISTRITO','VENDEDOR'],
   documento:['DATA','DATA VENDA','SEMANA','AREA DE NEGOCIO','TECNICO'],
   artigo:['ARTIGO','DESCRIÇAO','FORNECEDOR','PCUSTO','GRUPO','FAMILIAS','SUBFAMILIAS'],
   valores:['QUANTIDADE','VALOR LIQUIDO','IVA']
 };
-const listFields=['CLIENTES','DISTRITO','VENDEDOR','ARTIGO','FORNECEDOR','AREA DE NEGOCIO','TECNICO','GRUPO','FAMILIAS','SUBFAMILIAS'];
+const listFields=['CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','DISTRITO','VENDEDOR','ARTIGO','FORNECEDOR','AREA DE NEGOCIO','TECNICO','GRUPO','FAMILIAS','SUBFAMILIAS'];
 const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','SEMANA']);
 let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false;
 let selectedIds=new Set();
@@ -197,6 +199,8 @@ const PAGE_SIZE=25;
 // ===== CONFORMIDADE OFICIAL DA TABELA VENDAS =====
 const CONFORMIDADE_FIELDS=[
   ['CLIENTES','Cliente'],
+  ['GRUPO DE CLIENTE','Grupo de Cliente'],
+  ['ASSOCIADO','Associado'],
   ['DISTRITO','Distrito'],
   ['FORNECEDOR','Fornecedor'],
   ['VENDEDOR','Vendedor'],
@@ -229,7 +233,7 @@ function resumoConformidade(){
 // é calculada a partir de PVenda/Valor Líquido e PCUSTO.
 
 // Em modo de edição, apenas estes campos podem ser alterados.
-const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS']);
+const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','GRUPO DE CLIENTE','ASSOCIADO']);
 
 function today(){return new Date().toISOString().slice(0,10)}
 function label(x){return x.replaceAll('_',' ')}
@@ -287,7 +291,7 @@ function calc(){
 function field(container,name){
   const d=document.createElement('div');d.className='field';
   const l=document.createElement('label');
-  l.innerHTML=label(name)+(name==='DATA VENDA'||name==='CLIENTES'||name==='ARTIGO'||name==='QUANTIDADE'||name==='VALOR LIQUIDO'?'<span class="required"> *</span>':'');
+  l.innerHTML=label(name)+(name==='DATA VENDA'||name==='CLIENTES'||name==='GRUPO DE CLIENTE'||name==='ASSOCIADO'||name==='DISTRITO'||name==='FORNECEDOR'||name==='VENDEDOR'||name==='ARTIGO'||name==='QUANTIDADE'||name==='VALOR LIQUIDO'||name==='PCUSTO'||name==='AREA DE NEGOCIO'||name==='SEMANA'?'<span class="required"> *</span>':'');
   d.appendChild(l);
   let el;
   if(listFields.includes(name)){
@@ -325,7 +329,7 @@ function autofillClient(){
   const v=val('CLIENTES').trim();
   for(let i=rows.length-1;i>=0;i--){
     if(String(rows[i].CLIENTES??'').trim()===v){
-      ['CONTRIBUINTE','DISTRITO','VENDEDOR'].forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});
+      ['GRUPO DE CLIENTE','ASSOCIADO','CONTRIBUINTE','DISTRITO','VENDEDOR'].forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});
       calc();break;
     }
   }
@@ -389,7 +393,7 @@ function fromDb(r){
   return {
     id:r.id, source_key:r.source_key, DATA:r.data_documento||'', 'DATA VENDA':r.data_venda||'',
     ANO:r.ano, 'MÊS':r.mes, SEMANA:r.semana,
-    CLIENTES:r.cliente||'', CONTRIBUINTE:r.nif||'', DISTRITO:r.distrito||'',
+    CLIENTES:r.cliente||'', 'GRUPO DE CLIENTE':r['Grupo de Cliente']??'', ASSOCIADO:r['Associado']??'', CONTRIBUINTE:r.nif||'', DISTRITO:r.distrito||'',
     VENDEDOR:r.vendedor||'', TECNICO:r.tecnico||'', ARTIGO:r.artigo||'', 'DESCRIÇAO':r.descricao||'', FORNECEDOR:r.Fornecedor??r.fornecedor??'',
     QUANTIDADE:r.quantidade, 'VALOR LIQUIDO':r.valor_liquido, IVA:r.iva,
     'VALOR TOTAL':r.valor_total, PCUSTO:r.pcusto, MARGEM:r.margem,
@@ -406,6 +410,8 @@ function toDb(){
     vendedor:val('VENDEDOR').trim()||null,
     tecnico:val('TECNICO').trim()||null,
     cliente:val('CLIENTES').trim()||null,
+    'Grupo de Cliente':val('GRUPO DE CLIENTE').trim()||null,
+    'Associado':val('ASSOCIADO').trim()||null,
     nif:val('CONTRIBUINTE').trim()||null,
     artigo:val('ARTIGO').trim()||null,
     descricao:val('DESCRIÇAO').trim()||null,
@@ -468,7 +474,7 @@ function loadDbRow(id){
   document.getElementById('spainNoVat').checked=Number(obj.IVA||0)===0;
   ivaManual=true;semanaManual=true;document.getElementById('rowSearch').value=id;
   calc();updateMode();renderRecords();
-  message(`Venda ID ${id} carregada. Pode editar Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito, Data da Venda, Semana e Venda para Espanha.`,true);
+  message(`Venda ID ${id} carregada. Pode editar Grupo de Cliente, Associado, Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito, Data da Venda, Semana e Venda para Espanha.`,true);
   window.scrollTo({top:document.getElementById('cliente').closest('.card').offsetTop-15,behavior:'smooth'})
 }
 function filteredRows(){
@@ -591,7 +597,7 @@ document.getElementById('applyBulk').onclick=async()=>{
   let value=input.value;
   if(field!=='ESPANHA_SEM_IVA' && value==='')return message('Introduz o novo valor a aplicar.');
 
-  const names={FORNECEDOR:'Fornecedor',TECNICO:'Técnico',VENDEDOR:'Vendedor',PCUSTO:'Preço de Custo',DISTRITO:'Distrito','DATA VENDA':'Data da Venda',SEMANA:'Semana',ESPANHA_SEM_IVA:'Venda para Espanha'};
+  const names={'GRUPO DE CLIENTE':'Grupo de Cliente',ASSOCIADO:'Associado',FORNECEDOR:'Fornecedor',TECNICO:'Técnico',VENDEDOR:'Vendedor',PCUSTO:'Preço de Custo',DISTRITO:'Distrito','DATA VENDA':'Data da Venda',SEMANA:'Semana',ESPANHA_SEM_IVA:'Venda para Espanha'};
   const shownValue=field==='ESPANHA_SEM_IVA'?(document.getElementById('bulkSpainValue').value==='1'?'Sim — sem IVA':'Não — IVA 23%'):value;
   if(!confirm(`Confirmar alteração de ${ids.length} linha(s)?\n\nCampo: ${names[field]}\nNovo valor: ${shownValue}\n\nEsta alteração será gravada diretamente no Supabase.`))return;
 
@@ -608,6 +614,8 @@ document.getElementById('applyBulk').onclick=async()=>{
       }
     }else{
       const payload={updated_at:new Date().toISOString()};
+      if(field==='GRUPO DE CLIENTE')payload['Grupo de Cliente']=value.trim()||null;
+      if(field==='ASSOCIADO')payload['Associado']=value.trim()||null;
       if(field==='FORNECEDOR')payload.Fornecedor=value.trim()||null;
       if(field==='TECNICO')payload.tecnico=value.trim()||null;
       if(field==='VENDEDOR')payload.vendedor=value.trim()||null;
@@ -646,6 +654,8 @@ document.getElementById('save').onclick=async()=>{
     payload={
       Fornecedor:val('FORNECEDOR').trim()||null,
       tecnico:val('TECNICO').trim()||null,
+      'Grupo de Cliente':val('GRUPO DE CLIENTE').trim()||null,
+      'Associado':val('ASSOCIADO').trim()||null,
       vendedor:val('VENDEDOR').trim()||null,
       pcusto:num('PCUSTO'),
       margem:num('PCUSTO'),
