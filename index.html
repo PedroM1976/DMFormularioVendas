@@ -33,6 +33,21 @@
 .bulkbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:10px 0;padding:12px;background:#edf6f7;border:1px solid #cfe2e6;border-radius:9px}.bulkbar .field{min-width:180px}.bulkbar .field.grow{flex:1;min-width:220px}.bulkcount{font-weight:700;padding:10px 12px;background:white;border-radius:8px;border:1px solid #d8e2e5}.records th.sel,.records td.sel{width:42px;text-align:center}.records input.rowSelect{width:18px;height:18px;cursor:pointer}.btn:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:850px){.lookup{grid-template-columns:1fr 1fr}.lookup .mode{grid-column:1/-1}.grid{grid-template-columns:1fr 1fr}.calc{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.lookup{grid-template-columns:1fr}.grid,.calc{grid-template-columns:1fr}.actions .btn{width:100%}}
+
+/* Modernização + Histórico / Conferência */
+.top{background:linear-gradient(135deg,#0b5f6c,#16889a);box-shadow:0 14px 34px #0f667429}
+.btn{transition:.18s ease;box-shadow:0 4px 12px #16343a12}.btn:hover{transform:translateY(-1px);box-shadow:0 7px 18px #16343a22}.btn:active{transform:translateY(0)}
+.primary{background:linear-gradient(135deg,#0f6674,#16889a)}.secondary{background:#f0f6f7;border:1px solid #d2e2e5}.danger{background:linear-gradient(135deg,#a93434,#c84b4b)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 18px;padding:7px;background:#e8f0f2;border-radius:14px;position:sticky;top:8px;z-index:20;box-shadow:0 7px 22px #15323912}
+.tabbtn{flex:1;min-width:170px;border:0;border-radius:10px;padding:12px 15px;background:transparent;color:#36535b;font-weight:800;cursor:pointer}.tabbtn.active{background:#fff;color:#0f6674;box-shadow:0 3px 12px #15323917}
+.tab-panel{display:none}.tab-panel.active{display:block}.filters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.filters .field select{height:42px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:14px 0}.kpi{padding:16px;border:1px solid #d8e5e8;border-radius:14px;background:linear-gradient(180deg,#fff,#f8fbfc)}.kpi b{display:block;font-size:24px;color:#0f6674;margin-top:4px}.kpi span{font-size:12px;color:#60737a;font-weight:700}
+.quality-table{overflow:auto;max-height:420px;border:1px solid #d8e2e5;border-radius:12px}.quality-table table{width:100%;border-collapse:collapse;font-size:13px}.quality-table th,.quality-table td{padding:9px 10px;border-bottom:1px solid #e5ecee;text-align:left;white-space:nowrap}.quality-table th{position:sticky;top:0;background:#edf6f7;z-index:2}.quality-table tr.warn{background:#fff8e5}.badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;font-weight:800;font-size:11px}.badge.ok{background:#dff3e6;color:#176337}.badge.warn{background:#fff0c7;color:#7a5700}.badge.bad{background:#f8dddd;color:#8b1c1c}
+.barlist{display:grid;gap:10px}.barrow{display:grid;grid-template-columns:minmax(140px,240px) 1fr 90px;gap:10px;align-items:center}.bartrack{height:13px;background:#e8eff1;border-radius:999px;overflow:hidden}.barfill{height:100%;background:linear-gradient(90deg,#0f6674,#44aabd);border-radius:999px}.barlabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.barvalue{text-align:right;font-weight:800;color:#36535b}.split2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.section-title{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.mutedbox{padding:12px 14px;border-radius:10px;background:#f2f6f7;color:#547079;font-size:13px}
+@media(max-width:950px){.filters{grid-template-columns:1fr 1fr}.kpis{grid-template-columns:1fr 1fr}.split2{grid-template-columns:1fr}}
+@media(max-width:560px){.filters,.kpis{grid-template-columns:1fr}.tabbtn{min-width:100%}.barrow{grid-template-columns:110px 1fr 70px}}
+@media print{body.print-history .top,body.print-history .tabs,body.print-history #panel-form,body.print-history #panel-summary,body.print-history #historyActions,body.print-history .note{display:none!important}body.print-history #panel-history{display:block!important}.wrap{max-width:none;padding:0}.card{box-shadow:none;break-inside:avoid}.quality-table{max-height:none;overflow:visible}.quality-table th{position:static}}
+
 </style>
 </head>
 <body>
@@ -48,6 +63,14 @@
   </div>
 
   <div id="msg" class="msg"></div>
+
+  <div class="tabs">
+    <button class="tabbtn active" data-tab="form">Nova Venda / Edição</button>
+    <button class="tabbtn" data-tab="history">Histórico / Conferência</button>
+    <button class="tabbtn" data-tab="summary">Resumo</button>
+  </div>
+
+  <div id="panel-form" class="tab-panel active">
 
   <div class="card">
     <h2>Procurar e editar registo</h2>
@@ -79,10 +102,6 @@
           <option value="DISTRITO">Distrito</option>
           <option value="DATA VENDA">Data da Venda</option>
           <option value="SEMANA">Semana</option>
-          <option value="AREA DE NEGOCIO">Área de Negócio</option>
-          <option value="GRUPO">Grupo</option>
-          <option value="FAMILIAS">Família</option>
-          <option value="SUBFAMILIAS">Subfamília</option>
           <option value="ESPANHA_SEM_IVA">Venda para Espanha — sem IVA</option>
         </select>
       </div>
@@ -117,6 +136,43 @@
     <span class="session" id="sessionCount">Alterações nesta sessão: 0</span>
   </div>
 
+  </div>
+
+  <div id="panel-history" class="tab-panel">
+    <div class="card">
+      <div class="section-title"><div><h2 style="margin-bottom:4px">Histórico / Conferência</h2><div class="small">Consulta sempre os registos carregados do Supabase. Uma linha pode ser aberta no formulário para correção.</div></div>
+        <div class="actions" id="historyActions"><button class="btn secondary" id="exportCsv">Exportar CSV</button><button class="btn secondary" id="exportPdf">Exportar / Imprimir PDF</button></div>
+      </div>
+      <div class="filters" style="margin-top:16px">
+        <div class="field"><label>Cliente</label><select id="hfClient"><option value="">Todos</option></select></div>
+        <div class="field"><label>Artigo</label><select id="hfArticle"><option value="">Todos</option></select></div>
+        <div class="field"><label>Distrito</label><select id="hfDistrict"><option value="">Todos</option></select></div>
+        <div class="field"><label>Fornecedor</label><select id="hfSupplier"><option value="">Todos</option></select></div>
+        <div class="field"><label>Área de Negócio</label><select id="hfArea"><option value="">Todas</option></select></div>
+      </div>
+      <div class="recordsbar" style="margin-top:12px"><select id="hfStatus" style="height:38px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px"><option value="">Todos os estados</option><option value="ok">✓ Conforme</option><option value="warn">⚠ Verificar</option></select><input id="hfSearch" placeholder="Pesquisar ID, cliente, artigo, descrição..." style="height:38px;min-width:280px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px"><button class="btn secondary" id="clearHistoryFilters">Limpar filtros</button><span class="muted" id="historyCount"></span></div>
+      <div class="kpis" id="historyKpis"></div>
+      <div class="quality-table" id="historyTable"></div>
+    </div>
+    <div class="card">
+      <h2>Campos vazios por coluna</h2>
+      <div class="small">Mostra quantas células estão vazias em cada coluna dos registos atualmente filtrados.</div>
+      <div class="quality-table" id="columnQuality" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div id="panel-summary" class="tab-panel">
+    <div class="card"><h2>Resumo da base de vendas</h2><div class="kpis" id="summaryKpis"></div><div class="mutedbox">Os gráficos são calculados a partir dos registos atualmente carregados da tabela <b>vendas</b>, origem <b>BASE_SAGE</b>.</div></div>
+    <div class="split2">
+      <div class="card"><h2>Vendas por Área de Negócio</h2><div id="chartArea" class="barlist"></div></div>
+      <div class="card"><h2>Vendas por Distrito</h2><div id="chartDistrict" class="barlist"></div></div>
+    </div>
+    <div class="split2">
+      <div class="card"><h2>Top Fornecedores</h2><div id="chartSupplier" class="barlist"></div></div>
+      <div class="card"><h2>Qualidade dos dados</h2><div id="chartQuality" class="barlist"></div></div>
+    </div>
+  </div>
+
   <div class="note"><b>Importante:</b> ao carregar em <b>Guardar no Supabase</b>, a venda fica imediatamente gravada na base central. O Portal DM passa a lê-la na atualização seguinte.</div>
 </div>
 
@@ -137,6 +193,41 @@ const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','SEMANA']);
 let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false;
 let selectedIds=new Set();
 const PAGE_SIZE=25;
+
+// ===== CONFORMIDADE OFICIAL DA TABELA VENDAS =====
+const CONFORMIDADE_FIELDS=[
+  ['CLIENTES','Cliente'],
+  ['DISTRITO','Distrito'],
+  ['FORNECEDOR','Fornecedor'],
+  ['VENDEDOR','Vendedor'],
+  ['ARTIGO','Artigo'],
+  ['QUANTIDADE','Quantidade'],
+  ['VALOR LIQUIDO','PVenda'],
+  ['PCUSTO','Preço de Custo'],
+  ['AREA DE NEGOCIO','Área de Negócio'],
+  ['SEMANA','Semana'],
+  ['DATA VENDA','Data da Venda']
+];
+
+function valorPreenchido(v){
+  // Zero é um valor válido; apenas null/undefined/string vazia contam como falta.
+  return !(v===null || v===undefined || (typeof v==='string' && v.trim()===''));
+}
+function camposEmFalta(r){
+  return CONFORMIDADE_FIELDS.filter(([key])=>!valorPreenchido(r[key])).map(([,label])=>label);
+}
+function estadoConformidade(r){
+  const faltam=camposEmFalta(r);
+  return {conforme:faltam.length===0,faltam};
+}
+function resumoConformidade(){
+  const total=rows.length;
+  const conformes=rows.filter(r=>estadoConformidade(r).conforme).length;
+  return {total,conformes,verificar:total-conformes};
+}
+// Técnico é facultativo. Margem não é requisito manual:
+// é calculada a partir de PVenda/Valor Líquido e PCUSTO.
+
 // Em modo de edição, apenas estes campos podem ser alterados.
 const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS']);
 
@@ -251,13 +342,24 @@ function autofillArticle(){
 }
 function updateStatus(){
   document.getElementById('sessionCount').textContent=`Alterações nesta sessão: ${sessionSaved}`;
-  document.getElementById('status').textContent=`Supabase ligado — ${rows.length} registos carregados — ${sessionSaved} alteração(ões) nesta sessão`;
+  const qc=resumoConformidade();
+  document.getElementById('status').textContent=`Supabase ligado — ${rows.length} registos — ✓ ${qc.conformes} conformes — ⚠ ${qc.verificar} a verificar — ${sessionSaved} alteração(ões) nesta sessão`;
 }
 function applyEditPermissions(){
   const editing=!!editId;
+  const ALWAYS_EDITABLE=new Set(['AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS']);
   Object.entries(controls).forEach(([name,el])=>{
-    // Nova venda: todos os campos ficam livres. Edição: só os campos autorizados.
-    el.readOnly=editing && !EDITABLE_FIELDS.has(name);
+    // Nova venda: todos os campos ficam livres. Edição: apenas os autorizados.
+    // Estes quatro campos de classificação ficam SEMPRE livres para correção.
+    const canEdit=!editing || EDITABLE_FIELDS.has(name) || ALWAYS_EDITABLE.has(name);
+    el.readOnly=!canEdit;
+    el.disabled=false;
+    if(ALWAYS_EDITABLE.has(name)){
+      el.readOnly=false;
+      el.disabled=false;
+      el.removeAttribute('readonly');
+      el.removeAttribute('disabled');
+    }
   });
   const spain=document.getElementById('spainNoVat');
   spain.disabled=false; // Vendas para Espanha é sempre editável.
@@ -347,7 +449,7 @@ async function loadAllRows(){
       if(!page||page.length<limit)break;
     }
     rows=all.map(fromDb);
-    rebuildLists();updateStatus();recordOffset=Math.max(0,rows.length-PAGE_SIZE);renderRecords();
+    rebuildLists();rebuildHistoryFilters();updateStatus();recordOffset=Math.max(0,rows.length-PAGE_SIZE);renderRecords();renderHistory();renderSummary();
     message('Dados carregados diretamente do Supabase.',true)
   }catch(e){
     document.getElementById('status').textContent='Erro na ligação ao Supabase.';
@@ -366,7 +468,7 @@ function loadDbRow(id){
   document.getElementById('spainNoVat').checked=Number(obj.IVA||0)===0;
   ivaManual=true;semanaManual=true;document.getElementById('rowSearch').value=id;
   calc();updateMode();renderRecords();
-  message(`Venda ID ${id} carregada. Pode editar Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito, Data da Venda, Semana, Área de Negócio, Grupo, Família, Subfamília e Venda para Espanha.`,true);
+  message(`Venda ID ${id} carregada. Pode editar Fornecedor, Técnico, Vendedor, Preço de Custo, Distrito, Data da Venda, Semana e Venda para Espanha.`,true);
   window.scrollTo({top:document.getElementById('cliente').closest('.card').offsetTop-15,behavior:'smooth'})
 }
 function filteredRows(){
@@ -392,12 +494,63 @@ function selectedFilteredRows(){
 function renderRecords(){
   const all=filteredRows();const max=Math.max(0,all.length-PAGE_SIZE);recordOffset=Math.min(Math.max(0,recordOffset),max);
   const page=all.slice(recordOffset,recordOffset+PAGE_SIZE);const box=document.getElementById('recordsTable');
-  box.innerHTML=page.length?`<table><thead><tr><th class="sel">Sel.</th><th>ID</th><th>Data documento</th><th>Data venda</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Fornecedor</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th><th>Técnico</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td class="sel"><input class="rowSelect" type="checkbox" data-id="${r.id}" ${selectedIds.has(Number(r.id))?'checked':''}></td><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r['DATA VENDA']??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.FORNECEDOR??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td><td>${r.TECNICO??''}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
+  box.innerHTML=page.length?`<table><thead><tr><th class="sel">Sel.</th><th>ID</th><th>Data documento</th><th>Data venda</th><th>Semana</th><th>Cliente</th><th>Artigo</th><th>Descrição</th><th>Fornecedor</th><th>Qtd.</th><th>Valor líquido</th><th>Vendedor</th><th>Técnico</th><th>Conferência</th></tr></thead><tbody>${page.map(r=>`<tr data-id="${r.id}" class="${r.id===editId?'active':''}"><td class="sel"><input class="rowSelect" type="checkbox" data-id="${r.id}" ${selectedIds.has(Number(r.id))?'checked':''}></td><td><b>${r.id}</b></td><td>${r.DATA??''}</td><td>${r['DATA VENDA']??''}</td><td>${r.SEMANA??''}</td><td>${r.CLIENTES??''}</td><td>${r.ARTIGO??''}</td><td>${r['DESCRIÇAO']??''}</td><td>${r.FORNECEDOR??''}</td><td>${r.QUANTIDADE??''}</td><td>${r['VALOR LIQUIDO']??''}</td><td>${r.VENDEDOR??''}</td><td>${r.TECNICO??''}</td><td>${estadoConformidade(r).conforme?'✓ Conforme':'⚠ Verificar: '+estadoConformidade(r).faltam.join(', ')}</td></tr>`).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
   box.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=e=>{if(e.target.closest('.rowSelect'))return;loadDbRow(Number(tr.dataset.id))});
   box.querySelectorAll('.rowSelect').forEach(cb=>cb.onchange=()=>{const id=Number(cb.dataset.id);cb.checked?selectedIds.add(id):selectedIds.delete(id);updateSelectedCount()});
   document.getElementById('recordPage').textContent=all.length?`A mostrar ${recordOffset+1}-${Math.min(recordOffset+PAGE_SIZE,all.length)} de ${all.length}`:'Sem resultados';
   updateSelectedCount();
 }
+
+
+const QUALITY_FIELDS=['DATA VENDA','CLIENTES','ARTIGO','DESCRIÇAO','FORNECEDOR','DISTRITO','VENDEDOR','TECNICO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','QUANTIDADE','VALOR LIQUIDO','PCUSTO'];
+const COLUMN_LABELS={id:'ID','DATA VENDA':'Data da Venda',CLIENTES:'Cliente',ARTIGO:'Artigo','DESCRIÇAO':'Descrição',FORNECEDOR:'Fornecedor',DISTRITO:'Distrito',VENDEDOR:'Vendedor',TECNICO:'Técnico','AREA DE NEGOCIO':'Área de Negócio',GRUPO:'Grupo',FAMILIAS:'Família',SUBFAMILIAS:'Subfamília',QUANTIDADE:'Quantidade','VALOR LIQUIDO':'PVenda',PCUSTO:'Preço de Custo'};
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function blank(v){return v===null||v===undefined||String(v).trim()===''}
+function articlePatternMap(){
+  const groups=new Map();
+  rows.forEach(r=>{const a=String(r.ARTIGO??'').trim();if(!a)return;const sig=[r['AREA DE NEGOCIO'],r.GRUPO,r.FAMILIAS,r.SUBFAMILIAS].map(x=>String(x??'').trim()).join('¦');if(!sig.replaceAll('¦',''))return;const m=groups.get(a)||new Map();m.set(sig,(m.get(sig)||0)+1);groups.set(a,m)});
+  const out=new Map();groups.forEach((m,a)=>out.set(a,[...m.entries()].sort((x,y)=>y[1]-x[1])[0]?.[0]||''));return out
+}
+function rowReview(r,patterns){
+  const st=estadoConformidade(r);
+  const reasons=st.faltam.length?['Em falta: '+st.faltam.join(', ')]:[];
+  return {ok:st.conforme,reasons,missing:st.faltam};
+}
+function fillSelect(id,field){const el=document.getElementById(id);const cur=el.value;el.innerHTML='<option value="">Todos</option>'+unique(field).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');el.value=cur}
+function rebuildHistoryFilters(){fillSelect('hfClient','CLIENTES');fillSelect('hfArticle','ARTIGO');fillSelect('hfDistrict','DISTRITO');fillSelect('hfSupplier','FORNECEDOR');fillSelect('hfArea','AREA DE NEGOCIO')}
+function historyRows(){
+  const vals={CLIENTES:document.getElementById('hfClient').value,ARTIGO:document.getElementById('hfArticle').value,DISTRITO:document.getElementById('hfDistrict').value,FORNECEDOR:document.getElementById('hfSupplier').value,'AREA DE NEGOCIO':document.getElementById('hfArea').value};
+  const q=document.getElementById('hfSearch').value.trim().toLowerCase(),status=document.getElementById('hfStatus').value,patterns=articlePatternMap();
+  return rows.filter(r=>Object.entries(vals).every(([f,v])=>!v||String(r[f]??'')===v)).filter(r=>!q||[r.id,r.CLIENTES,r.ARTIGO,r['DESCRIÇAO'],r.FORNECEDOR,r.DISTRITO,r.VENDEDOR,r.TECNICO].some(v=>String(v??'').toLowerCase().includes(q))).filter(r=>{if(!status)return true;const rev=rowReview(r,patterns);return status==='ok'?rev.ok:!rev.ok})
+}
+function renderHistory(){
+  const data=historyRows(),patterns=articlePatternMap(),warn=data.filter(r=>!rowReview(r,patterns).ok).length,totalVal=data.reduce((s,r)=>s+(Number(r['VALOR LIQUIDO'])||0),0);
+  document.getElementById('historyCount').textContent=`${data.length} registo(s)`;
+  document.getElementById('historyKpis').innerHTML=`<div class="kpi"><span>REGISTOS</span><b>${data.length}</b></div><div class="kpi"><span>CONFORMES</span><b>${data.length-warn}</b></div><div class="kpi"><span>A VERIFICAR</span><b>${warn}</b></div><div class="kpi"><span>CLIENTES</span><b>${new Set(data.map(r=>r.CLIENTES).filter(Boolean)).size}</b></div><div class="kpi"><span>VALOR LÍQUIDO</span><b style="font-size:19px">${money(totalVal)}</b></div>`;
+  const head=['Estado','ID','Data','Cliente','Artigo','Descrição','Fornecedor','Distrito','Área','Grupo','Família','Subfamília','Qtd.','Valor Líquido','Vendedor','Técnico','Ação'];
+  document.getElementById('historyTable').innerHTML=data.length?`<table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${data.map(r=>{const rev=rowReview(r,patterns);return `<tr class="${rev.ok?'':'warn'}" title="${esc(rev.reasons.join(' | '))}"><td>${rev.ok?'<span class="badge ok">✓ Conforme</span>':'<span class="badge warn">⚠ Verificar</span>'}</td><td><b>${esc(r.id)}</b></td><td>${esc(r['DATA VENDA'])}</td><td>${esc(r.CLIENTES)}</td><td>${esc(r.ARTIGO)}</td><td>${esc(r['DESCRIÇAO'])}</td><td>${esc(r.FORNECEDOR)}</td><td>${esc(r.DISTRITO)}</td><td>${esc(r['AREA DE NEGOCIO'])}</td><td>${esc(r.GRUPO)}</td><td>${esc(r.FAMILIAS)}</td><td>${esc(r.SUBFAMILIAS)}</td><td>${esc(r.QUANTIDADE)}</td><td>${esc(r['VALOR LIQUIDO'])}</td><td>${esc(r.VENDEDOR)}</td><td>${esc(r.TECNICO)}</td><td><button class="btn secondary historyEdit" data-id="${r.id}" style="padding:7px 10px">Editar</button></td></tr>`}).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Sem resultados.</div>';
+  document.querySelectorAll('.historyEdit').forEach(b=>b.onclick=()=>{switchTab('form');loadDbRow(Number(b.dataset.id))});
+  renderColumnQuality(data);
+}
+function renderColumnQuality(data){
+  const fields=CONFORMIDADE_FIELDS.map(([key])=>key);
+  const n=data.length;document.getElementById('columnQuality').innerHTML=`<table><thead><tr><th>Coluna</th><th>Preenchidos</th><th>Vazios</th><th>% vazio</th><th>Estado</th></tr></thead><tbody>${fields.map(f=>{const empty=data.filter(r=>blank(r[f])).length,p=n?empty/n*100:0;return `<tr><td><b>${esc(COLUMN_LABELS[f]||f)}</b></td><td>${n-empty}</td><td>${empty}</td><td>${p.toFixed(1)}%</td><td>${empty===0?'<span class="badge ok">Completo</span>':p<10?'<span class="badge warn">Alguns vazios</span>':'<span class="badge bad">Rever</span>'}</td></tr>`}).join('')}</tbody></table>`
+}
+function countsBy(field){const m=new Map();rows.forEach(r=>{const k=String(r[field]??'').trim()||'(Sem valor)';m.set(k,(m.get(k)||0)+(Number(r['VALOR LIQUIDO'])||0))});return [...m.entries()].sort((a,b)=>b[1]-a[1])}
+function renderBars(id,items,maxItems=10,formatter=money){const el=document.getElementById(id),top=items.slice(0,maxItems),max=Math.max(1,...top.map(x=>x[1]));el.innerHTML=top.length?top.map(([k,v])=>`<div class="barrow"><div class="barlabel" title="${esc(k)}">${esc(k)}</div><div class="bartrack"><div class="barfill" style="width:${Math.max(2,v/max*100)}%"></div></div><div class="barvalue">${formatter(v)}</div></div>`).join(''):'<div class="muted">Sem dados.</div>'}
+function renderSummary(){
+  const patterns=articlePatternMap(),warn=rows.filter(r=>!rowReview(r,patterns).ok).length,total=rows.reduce((s,r)=>s+(Number(r['VALOR LIQUIDO'])||0),0),cost=rows.reduce((s,r)=>s+(Number(r.PCUSTO)||0),0);
+  document.getElementById('summaryKpis').innerHTML=`<div class="kpi"><span>TOTAL REGISTOS</span><b>${rows.length}</b></div><div class="kpi"><span>A VERIFICAR</span><b>${warn}</b></div><div class="kpi"><span>CLIENTES</span><b>${new Set(rows.map(r=>r.CLIENTES).filter(Boolean)).size}</b></div><div class="kpi"><span>VALOR LÍQUIDO</span><b style="font-size:19px">${money(total)}</b></div><div class="kpi"><span>MARGEM CALCULADA</span><b style="font-size:19px">${money(total-cost)}</b></div>`;
+  renderBars('chartArea',countsBy('AREA DE NEGOCIO'),10);renderBars('chartDistrict',countsBy('DISTRITO'),10);renderBars('chartSupplier',countsBy('FORNECEDOR'),10);
+  renderBars('chartQuality',[['Conformes',rows.length-warn],['A verificar',warn]],2,v=>String(Math.round(v)));
+}
+function switchTab(name){document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-'+name).classList.add('active');if(name==='history')renderHistory();if(name==='summary')renderSummary();window.scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('.tabbtn').forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+['hfClient','hfArticle','hfDistrict','hfSupplier','hfArea','hfStatus'].forEach(id=>document.getElementById(id).onchange=renderHistory);document.getElementById('hfSearch').oninput=renderHistory;
+document.getElementById('clearHistoryFilters').onclick=()=>{['hfClient','hfArticle','hfDistrict','hfSupplier','hfArea','hfStatus','hfSearch'].forEach(id=>document.getElementById(id).value='');renderHistory()};
+function csvCell(v){const s=String(v??'');return /[;"\n]/.test(s)?'"'+s.replaceAll('"','""')+'"':s}
+document.getElementById('exportCsv').onclick=()=>{const data=historyRows(),patterns=articlePatternMap(),cols=['id','DATA VENDA','CLIENTES','ARTIGO','DESCRIÇAO','FORNECEDOR','DISTRITO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','QUANTIDADE','VALOR LIQUIDO','PCUSTO','VENDEDOR','TECNICO'];const lines=[['ESTADO',...cols.map(c=>COLUMN_LABELS[c]||c)].map(csvCell).join(';'),...data.map(r=>[rowReview(r,patterns).ok?'Conforme':'Verificar',...cols.map(c=>r[c]??'')].map(csvCell).join(';'))];const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='historico_conferencia_vendas.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+document.getElementById('exportPdf').onclick=()=>{document.body.classList.add('print-history');window.print();setTimeout(()=>document.body.classList.remove('print-history'),500)};window.addEventListener('afterprint',()=>document.body.classList.remove('print-history'));
 
 document.getElementById('spainNoVat').addEventListener('change',()=>{ivaManual=false;applyAutomaticVat();calc()});
 document.getElementById('clear').onclick=()=>clearForm(true);
@@ -438,7 +591,7 @@ document.getElementById('applyBulk').onclick=async()=>{
   let value=input.value;
   if(field!=='ESPANHA_SEM_IVA' && value==='')return message('Introduz o novo valor a aplicar.');
 
-  const names={FORNECEDOR:'Fornecedor',TECNICO:'Técnico',VENDEDOR:'Vendedor',PCUSTO:'Preço de Custo',DISTRITO:'Distrito','DATA VENDA':'Data da Venda',SEMANA:'Semana','AREA DE NEGOCIO':'Área de Negócio',GRUPO:'Grupo',FAMILIAS:'Família',SUBFAMILIAS:'Subfamília',ESPANHA_SEM_IVA:'Venda para Espanha'};
+  const names={FORNECEDOR:'Fornecedor',TECNICO:'Técnico',VENDEDOR:'Vendedor',PCUSTO:'Preço de Custo',DISTRITO:'Distrito','DATA VENDA':'Data da Venda',SEMANA:'Semana',ESPANHA_SEM_IVA:'Venda para Espanha'};
   const shownValue=field==='ESPANHA_SEM_IVA'?(document.getElementById('bulkSpainValue').value==='1'?'Sim — sem IVA':'Não — IVA 23%'):value;
   if(!confirm(`Confirmar alteração de ${ids.length} linha(s)?\n\nCampo: ${names[field]}\nNovo valor: ${shownValue}\n\nEsta alteração será gravada diretamente no Supabase.`))return;
 
@@ -459,10 +612,6 @@ document.getElementById('applyBulk').onclick=async()=>{
       if(field==='TECNICO')payload.tecnico=value.trim()||null;
       if(field==='VENDEDOR')payload.vendedor=value.trim()||null;
       if(field==='DISTRITO')payload.distrito=value.trim()||null;
-       if(field==='AREA DE NEGOCIO')payload.area=value.trim()||null;
-       if(field==='GRUPO')payload.grupo=value.trim()||null;
-       if(field==='FAMILIAS')payload.familia=value.trim()||null;
-       if(field==='SUBFAMILIAS')payload.subfamilia=value.trim()||null;
       if(field==='DATA VENDA')payload.data_venda=value||null;
       if(field==='SEMANA'){
         const n=Number(value); if(!Number.isInteger(n)||n<1||n>53)throw new Error('A semana deve ser um número inteiro entre 1 e 53.');
@@ -501,8 +650,16 @@ document.getElementById('save').onclick=async()=>{
       pcusto:num('PCUSTO'),
       margem:num('PCUSTO'),
       distrito:val('DISTRITO').trim()||null,
+      area:val('AREA DE NEGOCIO').trim()||null,
+      grupo:val('GRUPO').trim()||null,
+      familia:val('FAMILIAS').trim()||null,
+      subfamilia:val('SUBFAMILIAS').trim()||null,
       data_venda:val('DATA VENDA')||null,
       semana:val('SEMANA')===''?null:Math.trunc(num('SEMANA')),
+      area:val('AREA DE NEGOCIO').trim()||null,
+      grupo:val('GRUPO').trim()||null,
+      familia:val('FAMILIAS').trim()||null,
+      subfamilia:val('SUBFAMILIAS').trim()||null,
       iva:iva,
       valor_total:liquido+iva,
       updated_at:new Date().toISOString()
@@ -547,7 +704,7 @@ document.getElementById('save').onclick=async()=>{
   }finally{btn.disabled=false}
 };
 
-build();updateMode();renderRecords();loadAllRows();
+build();rebuildHistoryFilters();updateMode();renderRecords();renderHistory();renderSummary();loadAllRows();
 </script>
 </body>
 </html>
