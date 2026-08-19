@@ -80,9 +80,28 @@
       <button class="btn secondary" id="newMode">Nova venda</button>
       <span class="mode" id="modeLabel">Modo: Nova venda</span>
     </div>
-    <div class="recordsbar" style="margin-top:16px">
+    <div class="bulkbar" id="loadBar" style="margin-top:16px">
+      <div class="field">
+        <label>Carregar dados</label>
+        <select id="loadMode">
+          <option value="all">Base completa</option>
+          <option value="client">Cliente</option>
+          <option value="supplier">Fornecedor</option>
+          <option value="seller">Vendedor</option>
+          <option value="year">Ano</option>
+          <option value="missing">Campos por preencher</option>
+        </select>
+      </div>
+      <div class="field grow" id="loadValueWrap">
+        <label id="loadValueLabel">Valor do filtro</label>
+        <input id="loadValue" placeholder="Não é necessário na Base completa">
+      </div>
+      <button class="btn primary" id="loadFiltered">Carregar dados</button>
+      <span class="bulkcount" id="loadInfo">Escolhe um filtro e carrega</span>
+    </div>
+    <div class="recordsbar">
       <b>Registos no Supabase</b>
-      <input id="recordFilter" placeholder="Pesquisar cliente, artigo, descrição, fornecedor, vendedor ou técnico" style="height:38px;min-width:280px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px">
+      <input id="recordFilter" placeholder="Pesquisar nos registos carregados" style="height:38px;min-width:280px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px">
       <button class="btn secondary" id="showPrevious">◀ Anteriores</button>
       <button class="btn secondary" id="showNext">Seguintes ▶</button>
       <span class="muted" id="recordPage"></span>
@@ -195,7 +214,7 @@ const sections={
 };
 const listFields=['CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','DISTRITO','VENDEDOR','ARTIGO','FORNECEDOR','AREA DE NEGOCIO','TECNICO','GRUPO','FAMILIAS','SUBFAMILIAS'];
 const numeric=new Set(['QUANTIDADE','VALOR LIQUIDO','IVA','PCUSTO','SEMANA']);
-let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false;
+let rows=[],controls={},sessionSaved=0,ivaManual=false,semanaManual=false,editId=null,recordOffset=0,loading=false,currentLoadMode='all',currentLoadValue='';
 let selectedIds=new Set();
 const PAGE_SIZE=25;
 
@@ -447,27 +466,80 @@ async function api(path,options={}){
   if(res.status===204)return null;
   const t=await res.text();return t?JSON.parse(t):null;
 }
-async function loadAllRows(){
-  if(loading)return;loading=true;
+function dbFilterForLoad(mode,value){
+  const v=String(value??'').trim();
+  if(mode==='all')return '';
+  if(mode==='client')return `&cliente=eq.${encodeURIComponent(v)}`;
+  if(mode==='supplier')return `&Fornecedor=eq.${encodeURIComponent(v)}`;
+  if(mode==='seller')return `&vendedor=eq.${encodeURIComponent(v)}`;
+  if(mode==='year')return `&ano=eq.${encodeURIComponent(v)}`;
+  if(mode==='missing'){
+    // Filtra no próprio Supabase os registos com pelo menos um campo obrigatório nulo.
+    // Os nomes com espaços são colocados entre aspas conforme a sintaxe PostgREST.
+    const textFields=['cliente','"Grupo de Cliente"','"Associado"','distrito','Fornecedor','vendedor','artigo','area'];
+    const otherFields=['quantidade','valor_liquido','pcusto','semana','data_venda'];
+    const parts=[...textFields.flatMap(f=>[`${f}.is.null`,`${f}.eq.`]),...otherFields.map(f=>`${f}.is.null`)];
+    const orExpr='('+parts.join(',')+')';
+    return `&or=${encodeURIComponent(orExpr)}`;
+  }
+  return '';
+}
+
+function validateLoadFilter(mode,value){
+  const v=String(value??'').trim();
+  if(['client','supplier','seller'].includes(mode) && !v)throw new Error('Introduz o valor do filtro antes de carregar.');
+  if(mode==='year' && (!/^\d{4}$/.test(v) || Number(v)<2000 || Number(v)>2100))throw new Error('Introduz um ano válido com 4 dígitos.');
+}
+
+function loadModeText(mode,value){
+  const names={all:'Base completa',client:'Cliente',supplier:'Fornecedor',seller:'Vendedor',year:'Ano',missing:'Campos por preencher'};
+  return mode==='all'||mode==='missing'?names[mode]:`${names[mode]}: ${value}`;
+}
+
+async function loadRows(mode=document.getElementById('loadMode')?.value||currentLoadMode,value=document.getElementById('loadValue')?.value??currentLoadValue){
+  if(loading)return;
+  try{validateLoadFilter(mode,value)}catch(e){return message(e.message||String(e))}
+  loading=true;currentLoadMode=mode;currentLoadValue=String(value??'').trim();
   document.getElementById('status').textContent='A carregar vendas do Supabase…';
+  document.getElementById('loadInfo').textContent='A carregar…';
   try{
-    const all=[];const limit=1000;
+    const all=[];const limit=1000,filter=dbFilterForLoad(currentLoadMode,currentLoadValue);
     for(let offset=0;;offset+=limit){
-      const page=await api(`${TABLE}?select=*&source_key=eq.${encodeURIComponent(SOURCE_KEY)}&order=id.asc&limit=${limit}&offset=${offset}`,{method:'GET'});
+      const page=await api(`${TABLE}?select=*&source_key=eq.${encodeURIComponent(SOURCE_KEY)}${filter}&order=id.asc&limit=${limit}&offset=${offset}`,{method:'GET'});
       all.push(...(page||[]));
       if(!page||page.length<limit)break;
     }
-    rows=all.map(fromDb);
-    rebuildLists();rebuildHistoryFilters();updateStatus();recordOffset=Math.max(0,rows.length-PAGE_SIZE);renderRecords();renderHistory();renderSummary();
-    message('Dados carregados diretamente do Supabase.',true)
+    rows=all.map(fromDb);selectedIds.clear();editId=null;
+    rebuildLists();rebuildHistoryFilters();updateMode();updateStatus();recordOffset=Math.max(0,rows.length-PAGE_SIZE);renderRecords();renderHistory();renderSummary();
+    const desc=loadModeText(currentLoadMode,currentLoadValue);
+    document.getElementById('loadInfo').textContent=`${desc} — ${rows.length} registo(s)`;
+    message(`${rows.length} registo(s) carregado(s) do Supabase — ${desc}.`,true)
   }catch(e){
     document.getElementById('status').textContent='Erro na ligação ao Supabase.';
+    document.getElementById('loadInfo').textContent='Erro no carregamento';
     message('Não foi possível carregar as vendas: '+(e.message||e))
   }finally{loading=false}
 }
-function loadDbRow(id){
+
+async function loadAllRows(){
+  document.getElementById('loadMode').value='all';
+  document.getElementById('loadValue').value='';
+  updateLoadModeUi();
+  return loadRows('all','');
+}
+
+async function reloadCurrentRows(){return loadRows(currentLoadMode,currentLoadValue)}
+
+async function loadDbRow(id){
   id=Number(id);if(!Number.isInteger(id)||id<1)return message('Introduz um ID válido.');
-  const obj=rows.find(r=>Number(r.id)===id);if(!obj)return message(`Não encontrei a venda ID ${id}.`);
+  let obj=rows.find(r=>Number(r.id)===id);
+  if(!obj){
+    try{
+      const found=await api(`${TABLE}?select=*&source_key=eq.${encodeURIComponent(SOURCE_KEY)}&id=eq.${id}&limit=1`,{method:'GET'});
+      if(found&&found[0])obj=fromDb(found[0]);
+    }catch(e){return message('Erro ao procurar a venda ID '+id+': '+(e.message||e))}
+  }
+  if(!obj)return message(`Não encontrei a venda ID ${id}.`);
   editId=id;
   Object.keys(controls).forEach(h=>{if(controls[h])controls[h].value=obj[h]??''});
   if(!controls.DATA.value && obj.ANO && obj['MÊS'])controls.DATA.value=`${obj.ANO}-${String(obj['MÊS']).padStart(2,'0')}-01`;
@@ -597,9 +669,19 @@ document.getElementById('exportPdf').onclick=()=>{document.body.classList.add('p
 document.getElementById('spainNoVat').addEventListener('change',()=>{ivaManual=false;applyAutomaticVat();calc()});
 document.getElementById('clear').onclick=()=>clearForm(true);
 document.getElementById('newMode').onclick=()=>clearForm(true);
-document.getElementById('refresh').onclick=loadAllRows;
+document.getElementById('refresh').onclick=reloadCurrentRows;
 document.getElementById('loadRow').onclick=()=>loadDbRow(document.getElementById('rowSearch').value);
 document.getElementById('rowSearch').addEventListener('keydown',e=>{if(e.key==='Enter')loadDbRow(e.target.value)});
+function updateLoadModeUi(){
+  const mode=document.getElementById('loadMode').value,wrap=document.getElementById('loadValueWrap'),input=document.getElementById('loadValue'),label=document.getElementById('loadValueLabel');
+  const needs=!['all','missing'].includes(mode);wrap.style.display=needs?'block':'none';
+  const cfg={client:['Cliente','Ex.: 2902'],supplier:['Fornecedor','Nome do fornecedor'],seller:['Vendedor','Nome do vendedor'],year:['Ano','Ex.: 2026']};
+  if(cfg[mode]){label.textContent=cfg[mode][0];input.placeholder=cfg[mode][1];input.type=mode==='year'?'number':'text'}else{input.type='text'}
+}
+document.getElementById('loadMode').onchange=updateLoadModeUi;
+document.getElementById('loadFiltered').onclick=()=>loadRows();
+document.getElementById('loadValue').addEventListener('keydown',e=>{if(e.key==='Enter')loadRows()});
+
 document.getElementById('recordFilter').addEventListener('input',()=>{recordOffset=0;renderRecords()});
 document.getElementById('showPrevious').onclick=()=>{recordOffset=Math.max(0,recordOffset-PAGE_SIZE);renderRecords()};
 document.getElementById('showNext').onclick=()=>{recordOffset+=PAGE_SIZE;renderRecords()};
@@ -669,7 +751,7 @@ document.getElementById('applyBulk').onclick=async()=>{
       await api(`${TABLE}?id=in.(${idList})`,{method:'PATCH',body:JSON.stringify(payload),prefer:'return=minimal'});
     }
     sessionSaved+=ids.length;
-    await loadAllRows();
+    await reloadCurrentRows();
     selectedIds.clear();
     renderRecords();
     message(`${ids.length} linha(s) atualizada(s) no Supabase — ${names[field]} alterado para ${shownValue}.`,true);
@@ -729,7 +811,7 @@ document.getElementById('save').onclick=async()=>{
       });
       sessionSaved++;
       const id=editId;
-      await loadAllRows();
+      await reloadCurrentRows();
       loadDbRow(id);
       message(`Venda ID ${id} atualizada no Supabase — todas as alterações editáveis foram gravadas.`,true)
     }else{
@@ -740,7 +822,7 @@ document.getElementById('save').onclick=async()=>{
         prefer:'return=representation'
       });
       sessionSaved++;
-      await loadAllRows();
+      await reloadCurrentRows();
       clearForm(false);
       message(`Nova venda gravada no Supabase${created&&created[0]?.id?' com ID '+created[0].id:''}.`,true)
     }
@@ -750,7 +832,7 @@ document.getElementById('save').onclick=async()=>{
   }finally{btn.disabled=false}
 };
 
-build();rebuildHistoryFilters();updateMode();renderRecords();renderHistory();renderSummary();loadAllRows();
+build();rebuildHistoryFilters();updateMode();updateLoadModeUi();renderRecords();renderHistory();renderSummary();document.getElementById('status').textContent='Supabase pronto — escolhe o filtro e carrega os dados.';
 </script>
 </body>
 </html>
