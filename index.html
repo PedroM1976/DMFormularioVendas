@@ -285,12 +285,13 @@ function calculated(){
   const d=val('DATA')?new Date(val('DATA')+'T12:00:00'):null;
   const liquido=num('VALOR LIQUIDO'),iva=num('IVA'),pc=num('PCUSTO');
 
-  // No ficheiro de vendas, PCUSTO já representa o custo total da linha.
-  // Não deve ser novamente multiplicado pela QUANTIDADE.
-  // Mantemos o valor apresentado em MARGEM igual ao valor existente nessa coluna
-  // e calculamos a percentagem pela diferença entre valor líquido e custo total.
-  const margem=pc;
-  const lucro=liquido-pc;
+  // PCUSTO representa o custo total da linha e não deve ser multiplicado pela QUANTIDADE.
+  // Em notas de crédito (VALOR LIQUIDO negativo), o custo é tratado com sinal negativo
+  // apenas para o cálculo da margem. Ex.: -195,43 - (-93,59) = -101,84.
+  // A percentagem usa o valor absoluto da venda no denominador, para manter o sinal
+  // da margem: -101,84 / 195,43 = -52,11%.
+  const custoAjustado=liquido<0?-Math.abs(pc):Math.abs(pc);
+  const margem=liquido-custoAjustado;
 
   return {
     ANO:d?d.getFullYear():null,
@@ -298,7 +299,7 @@ function calculated(){
     SEMANA:val('SEMANA')===''?null:Math.trunc(num('SEMANA')),
     VALOR_TOTAL:liquido+iva,
     MARGEM:margem,
-    MARGEM_PERCENT:liquido?lucro/liquido:0
+    MARGEM_PERCENT:liquido?margem/Math.abs(liquido):0
   }
 }
 function calc(){
@@ -653,8 +654,8 @@ function renderColumnQuality(data){
 function countsBy(field){const m=new Map();rows.forEach(r=>{const k=String(r[field]??'').trim()||'(Sem valor)';m.set(k,(m.get(k)||0)+(Number(r['VALOR LIQUIDO'])||0))});return [...m.entries()].sort((a,b)=>b[1]-a[1])}
 function renderBars(id,items,maxItems=10,formatter=money){const el=document.getElementById(id),top=items.slice(0,maxItems),max=Math.max(1,...top.map(x=>x[1]));el.innerHTML=top.length?top.map(([k,v])=>`<div class="barrow"><div class="barlabel" title="${esc(k)}">${esc(k)}</div><div class="bartrack"><div class="barfill" style="width:${Math.max(2,v/max*100)}%"></div></div><div class="barvalue">${formatter(v)}</div></div>`).join(''):'<div class="muted">Sem dados.</div>'}
 function renderSummary(){
-  const patterns=articlePatternMap(),warn=rows.filter(r=>!rowReview(r,patterns).ok).length,total=rows.reduce((s,r)=>s+(Number(r['VALOR LIQUIDO'])||0),0),cost=rows.reduce((s,r)=>s+(Number(r.PCUSTO)||0),0);
-  document.getElementById('summaryKpis').innerHTML=`<div class="kpi"><span>TOTAL REGISTOS</span><b>${rows.length}</b></div><div class="kpi"><span>A VERIFICAR</span><b>${warn}</b></div><div class="kpi"><span>CLIENTES</span><b>${new Set(rows.map(r=>r.CLIENTES).filter(Boolean)).size}</b></div><div class="kpi"><span>VALOR LÍQUIDO</span><b style="font-size:19px">${money(total)}</b></div><div class="kpi"><span>MARGEM CALCULADA</span><b style="font-size:19px">${money(total-cost)}</b></div>`;
+  const patterns=articlePatternMap(),warn=rows.filter(r=>!rowReview(r,patterns).ok).length,total=rows.reduce((s,r)=>s+(Number(r['VALOR LIQUIDO'])||0),0),margemTotal=rows.reduce((s,r)=>s+(Number(r.MARGEM)||0),0);
+  document.getElementById('summaryKpis').innerHTML=`<div class="kpi"><span>TOTAL REGISTOS</span><b>${rows.length}</b></div><div class="kpi"><span>A VERIFICAR</span><b>${warn}</b></div><div class="kpi"><span>CLIENTES</span><b>${new Set(rows.map(r=>r.CLIENTES).filter(Boolean)).size}</b></div><div class="kpi"><span>VALOR LÍQUIDO</span><b style="font-size:19px">${money(total)}</b></div><div class="kpi"><span>MARGEM CALCULADA</span><b style="font-size:19px">${money(margemTotal)}</b></div>`;
   renderBars('chartArea',countsBy('AREA DE NEGOCIO'),10);renderBars('chartDistrict',countsBy('DISTRITO'),10);renderBars('chartSupplier',countsBy('FORNECEDOR'),10);
   renderBars('chartQuality',[['Conformes',rows.length-warn],['A verificar',warn]],2,v=>String(Math.round(v)));
 }
@@ -745,10 +746,18 @@ document.getElementById('applyBulk').onclick=async()=>{
       }
       if(field==='PCUSTO'){
         const n=Number(String(value).replace(',','.')); if(!Number.isFinite(n))throw new Error('Introduz um preço de custo válido.');
-        payload.pcusto=n; payload.margem=n;
+        // A margem depende do VALOR LIQUIDO de cada linha, por isso atualizamos uma a uma.
+        for(const id of ids){
+          const r=rows.find(x=>Number(x.id)===Number(id));
+          const liquido=Number(r?.['VALOR LIQUIDO'])||0;
+          const custoAjustado=liquido<0?-Math.abs(n):Math.abs(n);
+          const margem=liquido-custoAjustado;
+          await api(`${TABLE}?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({pcusto:n,margem,updated_at:new Date().toISOString()}),prefer:'return=minimal'});
+        }
+      }else{
+        const idList=ids.join(',');
+        await api(`${TABLE}?id=in.(${idList})`,{method:'PATCH',body:JSON.stringify(payload),prefer:'return=minimal'});
       }
-      const idList=ids.join(',');
-      await api(`${TABLE}?id=in.(${idList})`,{method:'PATCH',body:JSON.stringify(payload),prefer:'return=minimal'});
     }
     sessionSaved+=ids.length;
     await reloadCurrentRows();
@@ -769,6 +778,7 @@ document.getElementById('save').onclick=async()=>{
     // Assim, vendas antigas com outros campos vazios continuam a poder ser corrigidas.
     const liquido=num('VALOR LIQUIDO');
     const iva=document.getElementById('spainNoVat').checked ? 0 : liquido*0.23;
+    const c=calculated();
     payload={
       Fornecedor:val('FORNECEDOR').trim()||null,
       tecnico:val('TECNICO').trim()||null,
@@ -776,7 +786,7 @@ document.getElementById('save').onclick=async()=>{
       'Associado':val('ASSOCIADO').trim()||null,
       vendedor:val('VENDEDOR').trim()||null,
       pcusto:num('PCUSTO'),
-      margem:num('PCUSTO'),
+      margem:c.MARGEM,
       distrito:val('DISTRITO').trim()||null,
       area:val('AREA DE NEGOCIO').trim()||null,
       grupo:val('GRUPO').trim()||null,
