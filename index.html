@@ -1134,7 +1134,7 @@ function renderImportPreview(){
   stats.innerHTML=`<div class="importstat"><span>Linhas SAGE</span><b>${total}</b></div><div class="importstat"><span>Prontas</span><b>${valid}</b></div><div class="importstat"><span>Por completar</span><b>${invalid}</b></div><div class="importstat"><span>Duplicadas</span><b>${dup}</b></div>`;
   document.getElementById('sageMissingPanel').style.display=total?'block':'none';
   const box=document.getElementById('importPreview');box.style.display='block';
-  const cols=['DATA VENDA','SEMANA','CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','DISTRITO','VENDEDOR','ARTIGO','DESCRIÇAO','FORNECEDOR','QUANTIDADE','VALOR LIQUIDO','PCUSTO','AREA DE NEGOCIO','TECNICO'];
+  const cols=['DATA VENDA','SEMANA','CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','DISTRITO','VENDEDOR','ARTIGO','DESCRIÇAO','FORNECEDOR','QUANTIDADE','VALOR LIQUIDO','PCUSTO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','TECNICO'];
   const sample=excelImportRows.slice(0,500);
   box.innerHTML=sample.length?`<table><thead><tr><th>Sel.</th><th>Estado</th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${sample.map(x=>{
     const cls=x.duplicate?'sage-row-dup':x.errors.length?'sage-row-bad':'sage-row-ready';
