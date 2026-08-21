@@ -48,6 +48,8 @@
 @media(max-width:560px){.filters,.kpis{grid-template-columns:1fr}.tabbtn{min-width:100%}.barrow{grid-template-columns:110px 1fr 70px}}
 @media print{body.print-history .top,body.print-history .tabs,body.print-history #panel-form,body.print-history #panel-summary,body.print-history #historyActions,body.print-history .note{display:none!important}body.print-history #panel-history{display:block!important}.wrap{max-width:none;padding:0}.card{box-shadow:none;break-inside:avoid}.quality-table{max-height:none;overflow:visible}.quality-table th{position:static}}
 
+
+.importbox{border:2px dashed #8bbcc4;background:#f7fbfc;border-radius:14px;padding:16px}.importgrid{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:10px;align-items:end}.importstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}.importstat{background:white;border:1px solid #d8e5e8;border-radius:10px;padding:11px}.importstat b{display:block;font-size:20px;color:#0f6674}.importpreview{margin-top:12px;max-height:330px;overflow:auto;border:1px solid #d8e2e5;border-radius:10px;background:#fff}.importpreview table{width:100%;border-collapse:collapse;font-size:12px}.importpreview th,.importpreview td{padding:7px 8px;border-bottom:1px solid #e5ecee;text-align:left;white-space:nowrap}.importpreview th{position:sticky;top:0;background:#edf6f7;z-index:2}.importpreview tr.bad{background:#fff0f0}.importpreview tr.dup{background:#fff8e5}.importhelp{font-size:12px;color:#547079;margin-top:8px}.sage-edit{min-width:110px;height:32px;padding:5px 7px;border:1px solid #c7d6da;border-radius:6px;background:#fff;font-size:12px}.sage-edit.missing{border-color:#c97b37;background:#fff8e9}.sage-row-ready{background:#f1fbf4}.sage-row-bad{background:#fff3f0}.sage-row-dup{background:#fff8e5}@media(max-width:850px){.importgrid{grid-template-columns:1fr}.importstats{grid-template-columns:1fr 1fr}}@media(max-width:560px){.importstats{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -139,6 +141,76 @@
     <div class="records" id="recordsTable"><div class="muted" style="padding:14px">A carregar registos…</div></div>
   </div>
 
+
+
+  <div class="card" id="excelImportCard">
+    <h2>Carregar ficheiro original do SAGE</h2>
+    <div class="importbox">
+      <div class="importgrid">
+        <div class="field">
+          <label>Ficheiro recebido do SAGE (.xls ou .xlsx)</label>
+          <input id="excelFile" type="file" accept=".xlsx,.xls">
+        </div>
+        <button class="btn primary" id="validateExcel" disabled>Ler ficheiro SAGE</button>
+        <button class="btn primary" id="importExcel" disabled>Gravar linhas prontas no Supabase</button>
+      </div>
+      <div class="importhelp">
+        Não é necessário copiar para outro Excel. Este formulário está ajustado ao relatório SAGE com Cliente por agrupamento e colunas Artigo, Descrição, Quantidade, Mercadoria, Descontos, Outros e Valor Líquido,
+        carrega cada valor no campo correto e tenta completar automaticamente, a partir do Supabase, os dados já conhecidos do Cliente e do Artigo. O que continuar em falta fica editável aqui.
+        A margem, margem %, IVA, valor total, ano e mês podem ser calculados pelo próprio formulário.
+      </div>
+
+      <div class="importstats" id="importStats" style="display:none"></div>
+
+      <div id="sageMissingPanel" style="display:none;margin-top:14px">
+        <h3 style="margin:0 0 8px">Preencher campos em falta</h3>
+        <div class="small" style="margin-bottom:10px">
+          Introduz um valor e aplica-o às linhas selecionadas. Também podes editar cada célula diretamente na tabela abaixo.
+        </div>
+        <div class="bulkbar">
+          <button class="btn secondary" id="sageSelectAll">Selecionar todas</button>
+          <button class="btn secondary" id="sageSelectMissing">Selecionar só incompletas</button>
+          <button class="btn secondary" id="sageClearSelection">Limpar seleção</button>
+          <span class="bulkcount" id="sageSelectedCount">0 selecionadas</span>
+
+          <div class="field">
+            <label>Campo a preencher</label>
+            <select id="sageBulkField">
+              <option value="">Escolher campo…</option>
+              <option value="DATA VENDA">Data da Venda</option>
+              <option value="SEMANA">Semana</option>
+              <option value="CLIENTES">Cliente</option>
+              <option value="GRUPO DE CLIENTE">Grupo de Cliente</option>
+              <option value="ASSOCIADO">Associado</option>
+              <option value="CONTRIBUINTE">Contribuinte / NIF</option>
+              <option value="DISTRITO">Distrito</option>
+              <option value="VENDEDOR">Vendedor</option>
+              <option value="TECNICO">Técnico</option>
+              <option value="FORNECEDOR">Fornecedor</option>
+              <option value="PCUSTO">Preço de Custo</option>
+              <option value="AREA DE NEGOCIO">Área de Negócio</option>
+              <option value="GRUPO">Grupo</option>
+              <option value="FAMILIAS">Família</option>
+              <option value="SUBFAMILIAS">Subfamília</option>
+              <option value="ESPANHA_SEM_IVA">Espanha sem IVA</option>
+            </select>
+          </div>
+          <div class="field grow">
+            <label>Valor</label>
+            <input id="sageBulkValue" placeholder="Valor a aplicar">
+            <select id="sageBulkYesNo" style="display:none;width:100%;height:42px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px;background:white;font-size:15px">
+              <option value="NÃO">NÃO — IVA 23%</option>
+              <option value="SIM">SIM — sem IVA</option>
+            </select>
+          </div>
+          <button class="btn primary" id="sageApplyBulk">Aplicar às selecionadas</button>
+        </div>
+      </div>
+
+      <div class="importpreview" id="importPreview" style="display:none"></div>
+    </div>
+  </div>
+
   <div class="card"><h2>Cliente</h2><div class="grid" id="cliente"></div></div>
   <div class="card"><h2>Documento / Data</h2><div class="grid" id="documento"></div></div>
   <div class="card"><h2>Artigo</h2><div class="grid" id="artigo"></div></div>
@@ -200,6 +272,7 @@
   <div class="note"><b>Importante:</b> ao carregar em <b>Guardar no Supabase</b>, a venda fica imediatamente gravada na base central. O Portal DM passa a lê-la na atualização seguinte.</div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 const SUPABASE_URL='https://lyihzeddgfbzmuqwrjya.supabase.co';
 const SUPABASE_KEY='sb_publishable_sBVSviRAaAi_l92aszt9xg_Q76yHSZC';
@@ -768,6 +841,396 @@ document.getElementById('applyBulk').onclick=async()=>{
   }catch(e){
     message('Erro na edição em massa: '+(e.message||e));
   }finally{btn.disabled=false;updateSelectedCount()}
+};
+
+// ===== IMPORTAÇÃO DIRETA DO FICHEIRO SAGE =====
+let excelImportRows=[];
+let excelImportValid=[];
+let sageSelected=new Set();
+
+const IMPORT_HEADERS=['DATA','DATA VENDA','ANO','MÊS','SEMANA','CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','CONTRIBUINTE','DISTRITO','VENDEDOR','TECNICO','ARTIGO','DESCRIÇAO','FORNECEDOR','QUANTIDADE','VALOR LIQUIDO','PCUSTO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','ESPANHA_SEM_IVA'];
+const IMPORT_REQUIRED=['DATA VENDA','SEMANA','CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','DISTRITO','VENDEDOR','ARTIGO','FORNECEDOR','QUANTIDADE','VALOR LIQUIDO','PCUSTO','AREA DE NEGOCIO'];
+const SAGE_EDIT_FIELDS=['DATA VENDA','SEMANA','CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','CONTRIBUINTE','DISTRITO','VENDEDOR','TECNICO','ARTIGO','DESCRIÇAO','FORNECEDOR','QUANTIDADE','VALOR LIQUIDO','PCUSTO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','ESPANHA_SEM_IVA'];
+
+function normHeader(v){
+  return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');
+}
+const HEADER_ALIASES={
+  'DATA':'DATA','DATA DOCUMENTO':'DATA','DATA EMISSAO':'DATA','DATA DA EMISSAO':'DATA',
+  'DATA VENDA':'DATA VENDA','DATA DA VENDA':'DATA VENDA','SEMANA':'SEMANA','ANO':'ANO','MES':'MÊS',
+  'CLIENTE':'CLIENTES','CLIENTES':'CLIENTES','NOME CLIENTE':'CLIENTES','GRUPO CLIENTE':'GRUPO DE CLIENTE','GRUPO DE CLIENTE':'GRUPO DE CLIENTE',
+  'ASSOCIADO':'ASSOCIADO','CONTRIBUINTE':'CONTRIBUINTE','NIF':'CONTRIBUINTE','DISTRITO':'DISTRITO',
+  'VENDEDOR':'VENDEDOR','TECNICO':'TECNICO','ARTIGO':'ARTIGO','CODIGO ARTIGO':'ARTIGO','COD. ARTIGO':'ARTIGO',
+  'DESCRICAO':'DESCRIÇAO','DESIGNACAO':'DESCRIÇAO','FORNECEDOR':'FORNECEDOR',
+  'QUANTIDADE':'QUANTIDADE','QTD':'QUANTIDADE','QT.':'QUANTIDADE',
+  'VALOR LIQUIDO':'VALOR LIQUIDO','TOTAL LIQUIDO':'VALOR LIQUIDO','LIQUIDO':'VALOR LIQUIDO','PVENDA':'VALOR LIQUIDO',
+  'MERCADORIA':'MERCADORIA','DESCONTOS':'DESCONTOS','DESCONTO':'DESCONTOS','OUTROS':'OUTROS',
+  'PCUSTO':'PCUSTO','PRECO DE CUSTO':'PCUSTO','CUSTO':'PCUSTO',
+  'AREA DE NEGOCIO':'AREA DE NEGOCIO','AREA NEGOCIO':'AREA DE NEGOCIO',
+  'GRUPO':'GRUPO','FAMILIA':'FAMILIAS','FAMILIAS':'FAMILIAS','SUBFAMILIA':'SUBFAMILIAS','SUBFAMILIAS':'SUBFAMILIAS',
+  'ESPANHA SEM IVA':'ESPANHA_SEM_IVA','ESPANHA SEM IVA?':'ESPANHA_SEM_IVA'
+};
+function canonicalHeader(v){const n=normHeader(v);return HEADER_ALIASES[n]||n}
+function importNumber(v){
+  if(typeof v==='number')return Number.isFinite(v)?v:NaN;
+  let s=String(v??'').trim(); if(!s)return NaN;
+  s=s.replace(/\s/g,'').replace(/[€]/g,'');
+  if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
+  else if(s.includes(','))s=s.replace(',','.');
+  return Number(s);
+}
+function excelDate(v){
+  if(v===null||v===undefined||v==='')return '';
+  if(v instanceof Date && !isNaN(v))return v.toISOString().slice(0,10);
+  if(typeof v==='number' && window.XLSX?.SSF){const d=XLSX.SSF.parse_date_code(v);if(d)return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`}
+  const s=String(v).trim();
+  let m=s.match(/^(\d{4})[-\/]([01]?\d)[-\/]([0-3]?\d)$/);if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  m=s.match(/^([0-3]?\d)[-\/]([01]?\d)[-\/](\d{4})$/);if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  return '';
+}
+function yesNo(v){const s=normHeader(v);return ['SIM','S','YES','TRUE','1'].includes(s)}
+function importFingerprint(r){return [r['DATA VENDA'],String(r.CLIENTES||'').trim().toUpperCase(),String(r.ARTIGO||'').trim().toUpperCase(),Number(r.QUANTIDADE)||0,Number(r['VALOR LIQUIDO'])||0].join('¦')}
+function existingFingerprint(r){return [r['DATA VENDA'],String(r.CLIENTES||'').trim().toUpperCase(),String(r.ARTIGO||'').trim().toUpperCase(),Number(r.QUANTIDADE)||0,Number(r['VALOR LIQUIDO'])||0].join('¦')}
+
+function rowErrors(r){
+  const errors=[];
+  IMPORT_REQUIRED.forEach(k=>{
+    const v=r[k];
+    if(v===undefined||v===null||v===''||(['SEMANA','QUANTIDADE','VALOR LIQUIDO','PCUSTO'].includes(k)&&!Number.isFinite(Number(v))))errors.push(k);
+  });
+  if(r['DATA VENDA'] && !/^\d{4}-\d{2}-\d{2}$/.test(r['DATA VENDA']))errors.push('DATA VENDA inválida');
+  const w=Number(r.SEMANA);if(r.SEMANA!==''&&r.SEMANA!=null&&( !Number.isInteger(w)||w<1||w>53))errors.push('SEMANA inválida');
+  return errors;
+}
+function autoCalendar(r){
+  const base=r['DATA VENDA']||r.DATA;
+  if(base){
+    const d=new Date(base+'T12:00:00');
+    if(!isNaN(d)){
+      r.ANO=d.getFullYear();r['MÊS']=d.getMonth()+1;
+      if(!r.SEMANA)r.SEMANA=isoWeek(d);
+    }
+  }
+}
+function normalizeSageObject(obj){
+  const r={};
+  Object.entries(obj||{}).forEach(([k,v])=>{
+    const h=canonicalHeader(k);
+    if(IMPORT_HEADERS.includes(h)||['MERCADORIA','DESCONTOS','OUTROS'].includes(h))r[h]=v;
+  });
+  r.DATA=excelDate(r.DATA);
+  r['DATA VENDA']=excelDate(r['DATA VENDA'])||r.DATA||'';
+  ['SEMANA','QUANTIDADE','VALOR LIQUIDO','PCUSTO','MERCADORIA','DESCONTOS','OUTROS'].forEach(k=>{
+    if(r[k]!==''&&r[k]!=null){const n=importNumber(r[k]);r[k]=Number.isFinite(n)?n:''}
+  });
+  if((r['VALOR LIQUIDO']===''||r['VALOR LIQUIDO']==null) && Number.isFinite(r.MERCADORIA)){
+    r['VALOR LIQUIDO']=r.MERCADORIA-(Number(r.DESCONTOS)||0)+(Number(r.OUTROS)||0);
+  }
+  IMPORT_HEADERS.forEach(k=>{
+    if(r[k]===undefined)r[k]='';
+    if(!['ANO','MÊS','SEMANA','QUANTIDADE','VALOR LIQUIDO','PCUSTO'].includes(k) && k!=='DATA' && k!=='DATA VENDA')r[k]=String(r[k]??'').trim();
+  });
+  autoCalendar(r);
+  return r;
+}
+function detectHeaderRow(matrix){
+  let best={idx:-1,score:0,map:{}};
+  matrix.slice(0,80).forEach((row,idx)=>{
+    const map={};let score=0;
+    row.forEach((cell,col)=>{
+      const h=canonicalHeader(cell);
+      if(['ARTIGO','DESCRIÇAO','QUANTIDADE','VALOR LIQUIDO','MERCADORIA','DESCONTOS','OUTROS','CLIENTES','DATA','DATA VENDA','PCUSTO','FORNECEDOR'].includes(h)){
+        map[h]=col;score++;
+      }
+    });
+    if((map.ARTIGO||map.ARTIGO===0) && score>best.score)best={idx,score,map};
+  });
+  return best;
+}
+function extractDateAnywhere(v){
+  const direct=excelDate(v);if(direct)return direct;
+  const s=String(v??'').trim();
+  let m=s.match(/(?:^|\D)([0-3]?\d)[-\/.]([01]?\d)[-\/.](\d{4})(?:\D|$)/);
+  if(m)return `${m[3]}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  m=s.match(/(?:^|\D)(\d{4})[-\/.]([01]?\d)[-\/.]([0-3]?\d)(?:\D|$)/);
+  if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  return '';
+}
+function detectContextDate(matrix,headerIdx){
+  for(let i=Math.max(0,headerIdx-30);i<headerIdx;i++){
+    for(const cell of (matrix[i]||[])){
+      const d=extractDateAnywhere(cell);if(d)return d;
+    }
+  }
+  return '';
+}
+function sameText(a,b){return normHeader(a)===normHeader(b) && normHeader(a)!==''}
+function enrichFromExisting(r){
+  // Reutiliza dados já existentes no Supabase para evitar voltar a preencher
+  // informação de clientes e artigos que o SAGE não exporta neste relatório.
+  const client=String(r.CLIENTES||'').trim();
+  if(client){
+    const hits=rows.filter(x=>sameText(x.CLIENTES,client));
+    if(hits.length){
+      const last=hits[hits.length-1];
+      ['GRUPO DE CLIENTE','ASSOCIADO','CONTRIBUINTE','DISTRITO','VENDEDOR'].forEach(f=>{
+        if(!String(r[f]??'').trim() && String(last[f]??'').trim())r[f]=last[f];
+      });
+    }
+  }
+  const article=String(r.ARTIGO||'').trim();
+  if(article){
+    const hits=rows.filter(x=>sameText(x.ARTIGO,article));
+    if(hits.length){
+      const last=hits[hits.length-1];
+      ['DESCRIÇAO','FORNECEDOR','PCUSTO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS'].forEach(f=>{
+        if((r[f]===null||r[f]===undefined||String(r[f]).trim()==='') && last[f]!==null && last[f]!==undefined && String(last[f]).trim()!=='')r[f]=last[f];
+      });
+    }
+  }
+  return r;
+}
+function isSageNonDataRow(row,headerMap){
+  const vals=row.map(v=>String(v??'').trim()).filter(Boolean);
+  if(!vals.length)return true;
+  const first=normHeader(vals[0]);
+  // Qualquer linha de total é apenas informativa no relatório SAGE e nunca é uma venda.
+  if(first.startsWith('TOTAL DO CLIENTE') || first.startsWith('TOTAL CLIENTE') || first.startsWith('TOTAL GERAL') || first==='TOTAIS' || first==='TOTAL')return true;
+
+  // Cabeçalhos institucionais do relatório SAGE também não representam vendas.
+  const whole=normHeader((row||[]).map(v=>String(v??'').trim()).filter(Boolean).join(' '));
+  if(whole.includes('DOMINGOS E MORGADO') || whole.includes('LICENCIADA A DOMINGOS E MORGADO'))return true;
+  if(first==='ARTIGO' && vals.some(v=>normHeader(v)==='QUANTIDADE'))return true; // cabeçalho repetido entre páginas
+  if(first.startsWith('MAPA VENDAS') || first.startsWith('VENDAS POR CLIENTE') || first.startsWith('DATA EMISSAO'))return true;
+  return false;
+}
+function sageClientHeader(row,headerMap){
+  const aCol=headerMap.ARTIGO;
+  const dCol=headerMap['DESCRIÇAO'];
+  const qCol=headerMap.QUANTIDADE;
+  const mCols=[headerMap.MERCADORIA,headerMap.DESCONTOS,headerMap.OUTROS,headerMap['VALOR LIQUIDO']].filter(c=>c!==undefined);
+  const code=aCol!==undefined?String(row[aCol]??'').trim():'';
+  const name=dCol!==undefined?String(row[dCol]??'').trim():'';
+  const qty=qCol!==undefined?importNumber(row[qCol]):NaN;
+  const hasMoney=mCols.some(c=>Number.isFinite(importNumber(row[c])));
+  // No relatório SAGE, o cabeçalho de cada cliente ocupa precisamente as colunas
+  // ARTIGO e DESCRIÇÃO (ex.: 1677 | ANTONIO POETA MIGUEL), mas não tem qtd./valores.
+  if(code && name && !Number.isFinite(qty) && !hasMoney){
+    const ncode=normHeader(code),nname=normHeader(name);
+    if(!/^(ARTIGO|TOTAL|TOTAIS|PAGINA|DATA)$/.test(ncode) && !/^(DESCRICAO|TOTAL)/.test(nname))
+      return {code,name};
+  }
+  return null;
+}
+function parseSageMatrix(matrix){
+  const hdr=detectHeaderRow(matrix);
+  if(hdr.idx<0)throw new Error('Não consegui localizar os cabeçalhos Artigo / Descrição / Quantidade / Mercadoria / Descontos / Outros / Valor Líquido do relatório SAGE.');
+  const contextDate=detectContextDate(matrix,hdr.idx);
+  let currentClientName='';
+  const out=[];
+  for(let i=hdr.idx+1;i<matrix.length;i++){
+    const row=matrix[i]||[];
+
+    // FILTRO ANTECIPADO: estas linhas são cabeçalhos/rodapés do relatório e
+    // nunca podem ser interpretadas como cliente ou artigo.
+    const rowText=normHeader(row.map(v=>String(v??'').trim()).filter(Boolean).join(' '));
+    if(
+      rowText.includes('DOMINGOS E MORGADO') ||
+      rowText.includes('LICENCIADO A DOMINGOS') ||
+      rowText.includes('LICENCIADA A DOMINGOS') ||
+      rowText.startsWith('TOTAL DO CLIENTE') ||
+      rowText.startsWith('TOTAL CLIENTE') ||
+      rowText.startsWith('TOTAL GERAL')
+    ) continue;
+    if(isSageNonDataRow(row,hdr.map))continue;
+    const clientHead=sageClientHeader(row,hdr.map);
+    if(clientHead){
+      // A linha "1677 | ANTONIO POETA MIGUEL" NÃO é uma venda.
+      // Guardamos apenas o NOME para aplicar às linhas de artigos seguintes.
+      // O número/código do cliente não é carregado para o campo CLIENTES.
+      currentClientName=clientHead.name;
+      continue;
+    }
+
+    // Mapeamento POSICIONAL do relatório SAGE recebido.
+    // Não usamos os restantes textos/colunas do relatório como campos do formulário.
+    const obj={};
+    if(hdr.map.ARTIGO!==undefined)obj.ARTIGO=row[hdr.map.ARTIGO]??'';
+    if(hdr.map['DESCRIÇAO']!==undefined)obj['DESCRIÇAO']=row[hdr.map['DESCRIÇAO']]??'';
+    if(hdr.map.QUANTIDADE!==undefined)obj.QUANTIDADE=row[hdr.map.QUANTIDADE]??'';
+    if(hdr.map.MERCADORIA!==undefined)obj.MERCADORIA=row[hdr.map.MERCADORIA]??'';
+    if(hdr.map.DESCONTOS!==undefined)obj.DESCONTOS=row[hdr.map.DESCONTOS]??'';
+    if(hdr.map.OUTROS!==undefined)obj.OUTROS=row[hdr.map.OUTROS]??'';
+    if(hdr.map['VALOR LIQUIDO']!==undefined)obj['VALOR LIQUIDO']=row[hdr.map['VALOR LIQUIDO']]??'';
+
+    let r=normalizeSageObject(obj);
+
+    // Segunda barreira de segurança para textos institucionais.
+    const contentCheck=normHeader([r.CLIENTES,r.ARTIGO,r['DESCRIÇAO']].join(' '));
+    if(contentCheck.includes('DOMINGOS E MORGADO') || contentCheck.includes('LICENCIADO A DOMINGOS') || contentCheck.includes('LICENCIADA A DOMINGOS')) continue;
+
+    if(currentClientName)r.CLIENTES=currentClientName;
+    if(contextDate){r['DATA VENDA']=contextDate;r.DATA=contextDate;autoCalendar(r)}
+
+    // Só são vendas as linhas que têm artigo e pelo menos quantidade/valor.
+    const hasArticle=String(r.ARTIGO||'').trim()!=='';
+    const hasValue=Number.isFinite(Number(r['VALOR LIQUIDO']));
+    const hasQty=Number.isFinite(Number(r.QUANTIDADE));
+    if(!hasArticle || (!hasValue && !hasQty))continue;
+
+    // O CLIENTES já contém o nome do cliente, portanto o cruzamento com a base
+    // existente é feito diretamente pelo nome.
+    enrichFromExisting(r);
+    out.push({row:i+1,data:r,errors:rowErrors(r),duplicate:false});
+  }
+  return out;
+}
+function parseStandardSheet(sheet){
+  const raw=XLSX.utils.sheet_to_json(sheet,{defval:'',raw:true});
+  return raw.filter(r=>Object.values(r).some(v=>String(v??'').trim()!=='')).map((obj,i)=>{
+    const r=enrichFromExisting(normalizeSageObject(obj));return {row:i+2,data:r,errors:rowErrors(r),duplicate:false};
+  });
+}
+function payloadFromImport(r){
+  const liquido=Number(r['VALOR LIQUIDO'])||0,pc=Number(r.PCUSTO)||0,semIva=yesNo(r.ESPANHA_SEM_IVA);
+  const iva=semIva?0:liquido*0.23;
+  const custoAjustado=liquido<0?-Math.abs(pc):Math.abs(pc);
+  const margem=liquido-custoAjustado;
+  const baseDate=r.DATA||r['DATA VENDA'];const d=baseDate?new Date(baseDate+'T12:00:00'):null;
+  return {
+    source_key:SOURCE_KEY,data_documento:r.DATA||r['DATA VENDA']||null,data_venda:r['DATA VENDA']||null,
+    ano:d&&!isNaN(d)?d.getFullYear():(Number(r.ANO)||null),mes:d&&!isNaN(d)?d.getMonth()+1:(Number(r['MÊS'])||null),
+    semana:r.SEMANA===''?null:Math.trunc(Number(r.SEMANA)),
+    vendedor:r.VENDEDOR||null,tecnico:r.TECNICO||null,cliente:r.CLIENTES||null,
+    'Grupo de Cliente':r['GRUPO DE CLIENTE']||null,'Associado':r.ASSOCIADO||null,nif:r.CONTRIBUINTE||null,
+    artigo:r.ARTIGO||null,descricao:r['DESCRIÇAO']||null,Fornecedor:r.FORNECEDOR||null,
+    quantidade:Number(r.QUANTIDADE)||0,valor_liquido:liquido,iva,valor_total:liquido+iva,
+    pcusto:pc,margem,area:r['AREA DE NEGOCIO']||null,grupo:r.GRUPO||null,familia:r.FAMILIAS||null,
+    subfamilia:r.SUBFAMILIAS||null,distrito:r.DISTRITO||null,created_at:new Date().toISOString(),updated_at:new Date().toISOString()
+  };
+}
+function updateSageSelection(){
+  document.getElementById('sageSelectedCount').textContent=`${sageSelected.size} selecionada${sageSelected.size===1?'':'s'}`;
+}
+function recalcImport(){
+  excelImportRows.forEach(x=>{autoCalendar(x.data);x.errors=rowErrors(x.data)});
+  const seen=new Set(),existing=new Set(rows.map(existingFingerprint));
+  excelImportRows.forEach(x=>{const fp=importFingerprint(x.data);x.duplicate=seen.has(fp)||existing.has(fp);seen.add(fp)});
+  excelImportValid=excelImportRows.filter(x=>!x.errors.length&&!x.duplicate);
+}
+function editCellHtml(x,field){
+  const v=x.data[field]??'';
+  let type=['SEMANA','QUANTIDADE','VALOR LIQUIDO','PCUSTO'].includes(field)?'number':field==='DATA VENDA'?'date':'text';
+  const miss=x.errors.some(e=>e===field||String(e).startsWith(field));
+  if(field==='ESPANHA_SEM_IVA'){
+    return `<select class="sage-edit ${miss?'missing':''}" data-row="${x.row}" data-field="${field}"><option value="NÃO" ${yesNo(v)?'':'selected'}>NÃO</option><option value="SIM" ${yesNo(v)?'selected':''}>SIM</option></select>`;
+  }
+  return `<input class="sage-edit ${miss?'missing':''}" data-row="${x.row}" data-field="${field}" type="${type}" ${type==='number'?'step="any"':''} value="${esc(v)}">`;
+}
+function renderImportPreview(){
+  recalcImport();
+  const total=excelImportRows.length,invalid=excelImportRows.filter(x=>x.errors.length).length,dup=excelImportRows.filter(x=>x.duplicate).length,valid=excelImportValid.length;
+  const stats=document.getElementById('importStats');stats.style.display='grid';
+  stats.innerHTML=`<div class="importstat"><span>Linhas SAGE</span><b>${total}</b></div><div class="importstat"><span>Prontas</span><b>${valid}</b></div><div class="importstat"><span>Por completar</span><b>${invalid}</b></div><div class="importstat"><span>Duplicadas</span><b>${dup}</b></div>`;
+  document.getElementById('sageMissingPanel').style.display=total?'block':'none';
+  const box=document.getElementById('importPreview');box.style.display='block';
+  const cols=['DATA VENDA','SEMANA','CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','DISTRITO','VENDEDOR','ARTIGO','DESCRIÇAO','FORNECEDOR','QUANTIDADE','VALOR LIQUIDO','PCUSTO','AREA DE NEGOCIO','TECNICO'];
+  const sample=excelImportRows.slice(0,500);
+  box.innerHTML=sample.length?`<table><thead><tr><th>Sel.</th><th>Estado</th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${sample.map(x=>{
+    const cls=x.duplicate?'sage-row-dup':x.errors.length?'sage-row-bad':'sage-row-ready';
+    const state=x.duplicate?'Duplicada':x.errors.length?'Completar: '+x.errors.join(', '):'Pronta';
+    return `<tr class="${cls}"><td><input type="checkbox" class="sage-select" data-row="${x.row}" ${sageSelected.has(x.row)?'checked':''}></td><td>${esc(state)}</td>${cols.map(c=>`<td>${editCellHtml(x,c)}</td>`).join('')}</tr>`
+  }).join('')}</tbody></table>`:'<div class="muted" style="padding:14px">Não foram encontradas linhas de venda.</div>';
+
+  box.querySelectorAll('.sage-select').forEach(cb=>cb.onchange=()=>{const n=Number(cb.dataset.row);cb.checked?sageSelected.add(n):sageSelected.delete(n);updateSageSelection()});
+  box.querySelectorAll('.sage-edit').forEach(el=>{
+    el.onchange=()=>{
+      const x=excelImportRows.find(z=>z.row===Number(el.dataset.row));if(!x)return;
+      let v=el.value;const f=el.dataset.field;
+      if(['SEMANA','QUANTIDADE','VALOR LIQUIDO','PCUSTO'].includes(f))v=v===''?'':importNumber(v);
+      if(f==='DATA VENDA')v=excelDate(v);
+      x.data[f]=v;renderImportPreview();
+    };
+  });
+  updateSageSelection();
+  document.getElementById('importExcel').disabled=excelImportValid.length===0;
+}
+async function readExcelFile(){
+  const input=document.getElementById('excelFile'),file=input.files?.[0];if(!file)return message('Escolhe primeiro o ficheiro original do SAGE.');
+  if(!window.XLSX)return message('Não foi possível carregar o leitor de Excel. É necessária ligação à internet para abrir ficheiros .xls/.xlsx.');
+  try{
+    const data=await file.arrayBuffer(),wb=XLSX.read(data,{type:'array',cellDates:true});
+    const sheet=wb.Sheets[wb.SheetNames[0]];
+    // Primeiro tenta o relatório SAGE tal como vem. Se for uma tabela normal, usa os próprios cabeçalhos.
+    const matrix=XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:true});
+    try{excelImportRows=parseSageMatrix(matrix)}
+    catch(_){excelImportRows=parseStandardSheet(sheet)}
+    sageSelected=new Set(excelImportRows.filter(x=>x.errors.length).map(x=>x.row));
+    renderImportPreview();
+    message(`${excelImportRows.length} linha(s) lida(s) do ficheiro SAGE. Completa os campos assinalados e grava quando estiverem prontas.`,true);
+  }catch(e){
+    excelImportRows=[];excelImportValid=[];sageSelected.clear();
+    document.getElementById('importExcel').disabled=true;
+    document.getElementById('sageMissingPanel').style.display='none';
+    message('Erro ao ler o ficheiro SAGE: '+(e.message||e));
+  }
+}
+document.getElementById('excelFile').onchange=()=>{
+  document.getElementById('validateExcel').disabled=!document.getElementById('excelFile').files?.length;
+  document.getElementById('importExcel').disabled=true;
+  document.getElementById('importStats').style.display='none';
+  document.getElementById('importPreview').style.display='none';
+  document.getElementById('sageMissingPanel').style.display='none';
+  excelImportRows=[];excelImportValid=[];sageSelected.clear();
+};
+document.getElementById('validateExcel').onclick=readExcelFile;
+document.getElementById('sageSelectAll').onclick=()=>{sageSelected=new Set(excelImportRows.map(x=>x.row));renderImportPreview()};
+document.getElementById('sageSelectMissing').onclick=()=>{sageSelected=new Set(excelImportRows.filter(x=>x.errors.length).map(x=>x.row));renderImportPreview()};
+document.getElementById('sageClearSelection').onclick=()=>{sageSelected.clear();renderImportPreview()};
+document.getElementById('sageBulkField').onchange=()=>{
+  const f=document.getElementById('sageBulkField').value;
+  const input=document.getElementById('sageBulkValue'),yn=document.getElementById('sageBulkYesNo');
+  yn.style.display=f==='ESPANHA_SEM_IVA'?'block':'none';input.style.display=f==='ESPANHA_SEM_IVA'?'none':'block';
+  input.type=f==='DATA VENDA'?'date':(['SEMANA','PCUSTO'].includes(f)?'number':'text');
+  input.value='';
+};
+document.getElementById('sageApplyBulk').onclick=()=>{
+  const f=document.getElementById('sageBulkField').value;if(!f)return message('Escolhe o campo que queres preencher.');
+  if(!sageSelected.size)return message('Seleciona pelo menos uma linha.');
+  let v=f==='ESPANHA_SEM_IVA'?document.getElementById('sageBulkYesNo').value:document.getElementById('sageBulkValue').value;
+  if(v===''&&f!=='TECNICO')return message('Introduz o valor a aplicar.');
+  if(['SEMANA','PCUSTO'].includes(f)){v=importNumber(v);if(!Number.isFinite(v))return message('Introduz um valor numérico válido.')}
+  if(f==='DATA VENDA'){v=excelDate(v);if(!v)return message('Introduz uma data válida.')}
+  excelImportRows.forEach(x=>{if(sageSelected.has(x.row))x.data[f]=v});
+  renderImportPreview();message(`Campo ${f} aplicado a ${sageSelected.size} linha(s).`,true);
+};
+document.getElementById('importExcel').onclick=async()=>{
+  recalcImport();
+  if(!excelImportValid.length)return message('Ainda não existem linhas completas prontas para gravar.');
+  if(!confirm(`Gravar ${excelImportValid.length} venda(s) completas no Supabase?\n\nAs linhas ainda incompletas não serão gravadas.\nA margem, IVA e valor total serão calculados automaticamente.`))return;
+  const btn=document.getElementById('importExcel');btn.disabled=true;let done=0;
+  try{
+    const payloads=excelImportValid.map(x=>payloadFromImport(x.data)),batchSize=200;
+    for(let i=0;i<payloads.length;i+=batchSize){
+      const batch=payloads.slice(i,i+batchSize);
+      await api(TABLE,{method:'POST',body:JSON.stringify(batch),prefer:'return=minimal'});
+      done+=batch.length;btn.textContent=`A gravar... ${done}/${payloads.length}`;
+    }
+    sessionSaved+=done;
+    const importedRows=new Set(excelImportValid.map(x=>x.row));
+    excelImportRows=excelImportRows.filter(x=>!importedRows.has(x.row));
+    sageSelected=new Set(excelImportRows.filter(x=>x.errors.length).map(x=>x.row));
+    await reloadCurrentRows();
+    if(excelImportRows.length){renderImportPreview();message(`${done} venda(s) gravada(s). Ficaram ${excelImportRows.length} linha(s) por completar/confirmar.`,true)}
+    else{
+      document.getElementById('excelFile').value='';document.getElementById('validateExcel').disabled=true;
+      document.getElementById('importStats').style.display='none';document.getElementById('importPreview').style.display='none';
+      document.getElementById('sageMissingPanel').style.display='none';
+      message(`${done} venda(s) do SAGE gravada(s) no Supabase.`,true);
+    }
+    updateStatus();
+  }catch(e){message(`Erro na gravação após ${done} linha(s): `+(e.message||e))}
+  finally{btn.textContent='Gravar linhas prontas no Supabase';btn.disabled=excelImportValid.length===0}
 };
 
 document.getElementById('save').onclick=async()=>{
