@@ -49,7 +49,7 @@
 @media print{body.print-history .top,body.print-history .tabs,body.print-history #panel-form,body.print-history #panel-summary,body.print-history #historyActions,body.print-history .note{display:none!important}body.print-history #panel-history{display:block!important}.wrap{max-width:none;padding:0}.card{box-shadow:none;break-inside:avoid}.quality-table{max-height:none;overflow:visible}.quality-table th{position:static}}
 
 
-.importbox{border:2px dashed #8bbcc4;background:#f7fbfc;border-radius:14px;padding:16px}.importgrid{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:10px;align-items:end}.importstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}.importstat{background:white;border:1px solid #d8e5e8;border-radius:10px;padding:11px}.importstat b{display:block;font-size:20px;color:#0f6674}.importpreview{margin-top:12px;max-height:330px;overflow:auto;border:1px solid #d8e2e5;border-radius:10px;background:#fff}.importpreview table{width:100%;border-collapse:collapse;font-size:12px}.importpreview th,.importpreview td{padding:7px 8px;border-bottom:1px solid #e5ecee;text-align:left;white-space:nowrap}.importpreview th{position:sticky;top:0;background:#edf6f7;z-index:2}.importpreview tr.bad{background:#fff0f0}.importpreview tr.dup{background:#fff8e5}.importhelp{font-size:12px;color:#547079;margin-top:8px}.sage-edit{min-width:110px;height:32px;padding:5px 7px;border:1px solid #c7d6da;border-radius:6px;background:#fff;font-size:12px}.sage-edit.missing{border-color:#c97b37;background:#fff8e9}.sage-row-ready{background:#f1fbf4}.sage-row-bad{background:#fff3f0}.sage-row-dup{background:#fff8e5}@media(max-width:850px){.importgrid{grid-template-columns:1fr}.importstats{grid-template-columns:1fr 1fr}}@media(max-width:560px){.importstats{grid-template-columns:1fr}}
+.importbox{border:2px dashed #8bbcc4;background:#f7fbfc;border-radius:14px;padding:16px}.importgrid{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:10px;align-items:end}.importstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}.importstat{background:white;border:1px solid #d8e5e8;border-radius:10px;padding:11px}.importstat b{display:block;font-size:20px;color:#0f6674}.importpreview{margin-top:12px;max-height:330px;overflow:auto;border:1px solid #d8e2e5;border-radius:10px;background:#fff}.importpreview table{width:100%;border-collapse:collapse;font-size:12px}.importpreview th,.importpreview td{padding:7px 8px;border-bottom:1px solid #e5ecee;text-align:left;white-space:nowrap}.importpreview th{position:sticky;top:0;background:#edf6f7;z-index:2}.importpreview tr.bad{background:#fff0f0}.importpreview tr.dup{background:#fff8e5}.importhelp{font-size:12px;color:#547079;margin-top:8px}.sage-edit{min-width:110px;height:32px;padding:5px 7px;border:1px solid #c7d6da;border-radius:6px;background:#fff;font-size:12px}.sage-edit.missing{border-color:#c97b37;background:#fff8e9}.sage-filter-select{min-width:165px;max-width:230px}.sage-row-ready{background:#f1fbf4}.sage-row-bad{background:#fff3f0}.sage-row-dup{background:#fff8e5}@media(max-width:850px){.importgrid{grid-template-columns:1fr}.importstats{grid-template-columns:1fr 1fr}}@media(max-width:560px){.importstats{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -197,7 +197,8 @@
           </div>
           <div class="field grow">
             <label>Valor</label>
-            <input id="sageBulkValue" placeholder="Valor a aplicar">
+            <input id="sageBulkValue" placeholder="Valor a aplicar" list="sageBulkOptions" autocomplete="off">
+            <datalist id="sageBulkOptions"></datalist>
             <select id="sageBulkYesNo" style="display:none;width:100%;height:42px;padding:8px 10px;border:1px solid #bfcfd4;border-radius:8px;background:white;font-size:15px">
               <option value="NÃO">NÃO — IVA 23%</option>
               <option value="SIM">SIM — sem IVA</option>
@@ -425,7 +426,7 @@ function autofillClient(){
   const v=val('CLIENTES').trim();
   for(let i=rows.length-1;i>=0;i--){
     if(String(rows[i].CLIENTES??'').trim()===v){
-      ['GRUPO DE CLIENTE','ASSOCIADO','CONTRIBUINTE','DISTRITO','VENDEDOR'].forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});
+      ['CONTRIBUINTE','DISTRITO'].forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});
       calc();break;
     }
   }
@@ -435,7 +436,7 @@ function autofillArticle(){
   const v=val('ARTIGO').trim();
   for(let i=rows.length-1;i>=0;i--){
     if(String(rows[i].ARTIGO??'').trim()===v){
-      ['DESCRIÇAO','FORNECEDOR','PCUSTO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS'].forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});
+      ['DESCRIÇAO','FORNECEDOR'].forEach(f=>{if(controls[f])controls[f].value=rows[i][f]??''});
       calc();break;
     }
   }
@@ -847,6 +848,7 @@ document.getElementById('applyBulk').onclick=async()=>{
 let excelImportRows=[];
 let excelImportValid=[];
 let sageSelected=new Set();
+let sageReferenceRows=[]; // Base completa do Supabase usada APENAS para reconhecer Cliente/Artigo na importação SAGE
 
 const IMPORT_HEADERS=['DATA','DATA VENDA','ANO','MÊS','SEMANA','CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','CONTRIBUINTE','DISTRITO','VENDEDOR','TECNICO','ARTIGO','DESCRIÇAO','FORNECEDOR','QUANTIDADE','VALOR LIQUIDO','PCUSTO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','ESPANHA_SEM_IVA'];
 const IMPORT_REQUIRED=['DATA VENDA','SEMANA','CLIENTES','GRUPO DE CLIENTE','ASSOCIADO','DISTRITO','VENDEDOR','ARTIGO','FORNECEDOR','QUANTIDADE','VALOR LIQUIDO','PCUSTO','AREA DE NEGOCIO'];
@@ -965,27 +967,70 @@ function detectContextDate(matrix,headerIdx){
   return '';
 }
 function sameText(a,b){return normHeader(a)===normHeader(b) && normHeader(a)!==''}
+function mostFrequentSignature(hits,fields){
+  const counts=new Map();
+  hits.forEach(x=>{
+    const vals=fields.map(f=>String(x[f]??'').trim());
+    if(!vals.some(Boolean))return;
+    const key=vals.join('¦');counts.set(key,(counts.get(key)||0)+1);
+  });
+  if(!counts.size)return null;
+  const key=[...counts.entries()].sort((a,b)=>b[1]-a[1])[0][0];
+  const vals=key.split('¦');
+  return Object.fromEntries(fields.map((f,i)=>[f,vals[i]||'']));
+}
+async function loadSageReferenceRows(){
+  // A importação SAGE deve reconhecer classificações contra a BASE COMPLETA do Supabase,
+  // mesmo que o utilizador tenha carregado apenas um filtro (ou nenhum) no resto do formulário.
+  const all=[]; const limit=1000;
+  for(let offset=0;;offset+=limit){
+    const page=await api(`${TABLE}?select=*&source_key=eq.${encodeURIComponent(SOURCE_KEY)}&order=id.asc&limit=${limit}&offset=${offset}`,{method:'GET'});
+    all.push(...(page||[]));
+    if(!page || page.length<limit)break;
+  }
+  sageReferenceRows=all.map(fromDb);
+  return sageReferenceRows;
+}
+function sageReferenceSource(){
+  return sageReferenceRows.length?sageReferenceRows:rows;
+}
+
 function enrichFromExisting(r){
-  // Reutiliza dados já existentes no Supabase para evitar voltar a preencher
-  // informação de clientes e artigos que o SAGE não exporta neste relatório.
+  // Durante a IMPORTAÇÃO SAGE, tenta reconhecer os campos que o ficheiro não traz.
+  // Cliente -> Grupo de Cliente / Associado.
+  // Artigo -> Área de Negócio / Grupo / Família / Subfamília.
+  // VENDEDOR e PCUSTO nunca são preenchidos automaticamente: ficam para preenchimento manual.
+  // Usa a combinação mais frequente já gravada na base, mas continua tudo editável.
   const client=String(r.CLIENTES||'').trim();
   if(client){
-    const hits=rows.filter(x=>sameText(x.CLIENTES,client));
+    const hits=sageReferenceSource().filter(x=>sameText(x.CLIENTES,client));
     if(hits.length){
       const last=hits[hits.length-1];
-      ['GRUPO DE CLIENTE','ASSOCIADO','CONTRIBUINTE','DISTRITO','VENDEDOR'].forEach(f=>{
+      ['CONTRIBUINTE','DISTRITO'].forEach(f=>{
         if(!String(r[f]??'').trim() && String(last[f]??'').trim())r[f]=last[f];
       });
+      const cls=mostFrequentSignature(hits,['GRUPO DE CLIENTE','ASSOCIADO']);
+      if(cls){
+        ['GRUPO DE CLIENTE','ASSOCIADO'].forEach(f=>{
+          if(!String(r[f]??'').trim() && String(cls[f]??'').trim())r[f]=cls[f];
+        });
+      }
     }
   }
   const article=String(r.ARTIGO||'').trim();
   if(article){
-    const hits=rows.filter(x=>sameText(x.ARTIGO,article));
+    const hits=sageReferenceSource().filter(x=>sameText(x.ARTIGO,article));
     if(hits.length){
       const last=hits[hits.length-1];
-      ['DESCRIÇAO','FORNECEDOR','PCUSTO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS'].forEach(f=>{
+      ['DESCRIÇAO','FORNECEDOR'].forEach(f=>{
         if((r[f]===null||r[f]===undefined||String(r[f]).trim()==='') && last[f]!==null && last[f]!==undefined && String(last[f]).trim()!=='')r[f]=last[f];
       });
+      const cls=mostFrequentSignature(hits,['AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS']);
+      if(cls){
+        ['AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS'].forEach(f=>{
+          if(!String(r[f]??'').trim() && String(cls[f]??'').trim())r[f]=cls[f];
+        });
+      }
     }
   }
   return r;
@@ -1111,12 +1156,44 @@ function payloadFromImport(r){
 }
 function updateSageSelection(){
   document.getElementById('sageSelectedCount').textContent=`${sageSelected.size} selecionada${sageSelected.size===1?'':'s'}`;
+  if(typeof updateSageBulkOptions==='function')updateSageBulkOptions();
 }
 function recalcImport(){
   excelImportRows.forEach(x=>{autoCalendar(x.data);x.errors=rowErrors(x.data)});
-  const seen=new Set(),existing=new Set(rows.map(existingFingerprint));
+  const seen=new Set(),existing=new Set(sageReferenceSource().map(existingFingerprint));
   excelImportRows.forEach(x=>{const fp=importFingerprint(x.data);x.duplicate=seen.has(fp)||existing.has(fp);seen.add(fp)});
   excelImportValid=excelImportRows.filter(x=>!x.errors.length&&!x.duplicate);
+}
+function sageCellOptions(field,data){
+  if(!SAGE_FILTER_FIELDS.has(field))return [];
+  const source=sageReferenceSource().slice();
+
+  // O valor reconhecido pelo Cliente/Artigo é apenas uma sugestão inicial.
+  // Para correções manuais, cada filtro deve disponibilizar TODOS os valores
+  // já existentes no Supabase, mesmo que a classificação histórica da linha
+  // seja diferente da classificação atual.
+  const all=[...new Set(source.map(r=>String(r[field]??'').trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'pt'));
+
+  // Coloca primeiro as opções compatíveis com a classificação atual da linha,
+  // mas sem esconder as restantes opções da base.
+  let compatible=source.slice();
+  const deps={
+    'ASSOCIADO':['GRUPO DE CLIENTE'],
+    'GRUPO':['AREA DE NEGOCIO'],
+    'FAMILIAS':['AREA DE NEGOCIO','GRUPO'],
+    'SUBFAMILIAS':['AREA DE NEGOCIO','GRUPO','FAMILIAS']
+  }[field]||[];
+  deps.forEach(dep=>{
+    const val=String(data?.[dep]??'').trim();
+    if(val)compatible=compatible.filter(r=>sameText(r[dep],val));
+  });
+  const preferred=[...new Set(compatible.map(r=>String(r[field]??'').trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'pt'));
+  const vals=[...preferred,...all.filter(v=>!preferred.some(p=>sameText(p,v)))];
+  const cur=String(data?.[field]??'').trim();
+  if(cur && !vals.some(v=>sameText(v,cur)))vals.unshift(cur);
+  return vals;
 }
 function editCellHtml(x,field){
   const v=x.data[field]??'';
@@ -1124,6 +1201,13 @@ function editCellHtml(x,field){
   const miss=x.errors.some(e=>e===field||String(e).startsWith(field));
   if(field==='ESPANHA_SEM_IVA'){
     return `<select class="sage-edit ${miss?'missing':''}" data-row="${x.row}" data-field="${field}"><option value="NÃO" ${yesNo(v)?'':'selected'}>NÃO</option><option value="SIM" ${yesNo(v)?'selected':''}>SIM</option></select>`;
+  }
+  if(SAGE_FILTER_FIELDS.has(field)){
+    const opts=sageCellOptions(field,x.data);
+    const listId=`sage-list-${x.row}-${String(field).replace(/[^A-Za-z0-9]+/g,'-')}`;
+    // INPUT + DATALIST: mantém o preenchimento automático, mas permite alterar
+    // para qualquer opção do Supabase ou escrever um valor novo quando necessário.
+    return `<input class="sage-edit sage-filter-select ${miss?'missing':''}" data-row="${x.row}" data-field="${field}" list="${listId}" value="${esc(v)}" autocomplete="off"><datalist id="${listId}">${opts.map(o=>`<option value="${esc(o)}"></option>`).join('')}</datalist>`;
   }
   return `<input class="sage-edit ${miss?'missing':''}" data-row="${x.row}" data-field="${field}" type="${type}" ${type==='number'?'step="any"':''} value="${esc(v)}">`;
 }
@@ -1159,6 +1243,8 @@ async function readExcelFile(){
   const input=document.getElementById('excelFile'),file=input.files?.[0];if(!file)return message('Escolhe primeiro o ficheiro original do SAGE.');
   if(!window.XLSX)return message('Não foi possível carregar o leitor de Excel. É necessária ligação à internet para abrir ficheiros .xls/.xlsx.');
   try{
+    document.getElementById('status').textContent='A consultar a base Supabase para reconhecer Clientes e Artigos…';
+    await loadSageReferenceRows();
     const data=await file.arrayBuffer(),wb=XLSX.read(data,{type:'array',cellDates:true});
     const sheet=wb.Sheets[wb.SheetNames[0]];
     // Primeiro tenta o relatório SAGE tal como vem. Se for uma tabela normal, usa os próprios cabeçalhos.
@@ -1167,7 +1253,7 @@ async function readExcelFile(){
     catch(_){excelImportRows=parseStandardSheet(sheet)}
     sageSelected=new Set(excelImportRows.filter(x=>x.errors.length).map(x=>x.row));
     renderImportPreview();
-    message(`${excelImportRows.length} linha(s) lida(s) do ficheiro SAGE. Completa os campos assinalados e grava quando estiverem prontas.`,true);
+    message(`${excelImportRows.length} linha(s) lida(s) do SAGE. Foram comparadas com ${sageReferenceRows.length} registo(s) do Supabase: Cliente e Artigo foram classificados automaticamente quando existia correspondência. Vendedor e Preço de Custo ficam sempre para preenchimento manual. Só os restantes campos sem correspondência ficam para editar.`,true);
   }catch(e){
     excelImportRows=[];excelImportValid=[];sageSelected.clear();
     document.getElementById('importExcel').disabled=true;
@@ -1187,12 +1273,42 @@ document.getElementById('validateExcel').onclick=readExcelFile;
 document.getElementById('sageSelectAll').onclick=()=>{sageSelected=new Set(excelImportRows.map(x=>x.row));renderImportPreview()};
 document.getElementById('sageSelectMissing').onclick=()=>{sageSelected=new Set(excelImportRows.filter(x=>x.errors.length).map(x=>x.row));renderImportPreview()};
 document.getElementById('sageClearSelection').onclick=()=>{sageSelected.clear();renderImportPreview()};
+const SAGE_FILTER_FIELDS=new Set(['GRUPO DE CLIENTE','ASSOCIADO','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS']);
+function sageSelectedData(){return excelImportRows.filter(x=>sageSelected.has(x.row)).map(x=>x.data)}
+function sageFilterOptions(field){
+  if(!SAGE_FILTER_FIELDS.has(field))return [];
+  let source=sageReferenceSource().slice();
+  const selected=sageSelectedData();
+  // Filtros dependentes: usa classificações já preenchidas nas linhas selecionadas
+  // para reduzir as opções seguintes, sem preencher nada automaticamente.
+  const deps={
+    'ASSOCIADO':['GRUPO DE CLIENTE'],
+    'GRUPO':['AREA DE NEGOCIO'],
+    'FAMILIAS':['AREA DE NEGOCIO','GRUPO'],
+    'SUBFAMILIAS':['AREA DE NEGOCIO','GRUPO','FAMILIAS']
+  }[field]||[];
+  deps.forEach(dep=>{
+    const vals=[...new Set(selected.map(r=>String(r[dep]??'').trim()).filter(Boolean))];
+    if(vals.length===1)source=source.filter(r=>sameText(r[dep],vals[0]));
+  });
+  return [...new Set(source.map(r=>String(r[field]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
+}
+function updateSageBulkOptions(){
+  const f=document.getElementById('sageBulkField').value;
+  const dl=document.getElementById('sageBulkOptions');
+  const input=document.getElementById('sageBulkValue');
+  const opts=sageFilterOptions(f);
+  dl.innerHTML=opts.map(v=>`<option value="${esc(v)}"></option>`).join('');
+  if(SAGE_FILTER_FIELDS.has(f))input.placeholder=opts.length?`Escreve para filtrar ${opts.length} opção(ões)…`:'Sem opções existentes — podes escrever um valor novo';
+  else input.placeholder='Valor a aplicar';
+}
 document.getElementById('sageBulkField').onchange=()=>{
   const f=document.getElementById('sageBulkField').value;
   const input=document.getElementById('sageBulkValue'),yn=document.getElementById('sageBulkYesNo');
   yn.style.display=f==='ESPANHA_SEM_IVA'?'block':'none';input.style.display=f==='ESPANHA_SEM_IVA'?'none':'block';
   input.type=f==='DATA VENDA'?'date':(['SEMANA','PCUSTO'].includes(f)?'number':'text');
   input.value='';
+  updateSageBulkOptions();
 };
 document.getElementById('sageApplyBulk').onclick=()=>{
   const f=document.getElementById('sageBulkField').value;if(!f)return message('Escolhe o campo que queres preencher.');
