@@ -1464,7 +1464,7 @@ function invoiceNumber(s){return Number(String(s).replace(/\s/g,'').replace(/\.(
 function parseInvoiceText(text){
   const lines=text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
   const clientPos=lines.findIndex(s=>/Ex\(s\).*Sr/i.test(s));
-  const client=clientPos>=0?lines[clientPos+1]:'';
+  const client=clientPos>=0?(lines[clientPos+1]||''):'';
   const number=(text.match(/FT\s+[A-Z0-9]+\s*\/\s*\d+\s*\/\s*\d{4}/i)||[''])[0].replace(/\s+/g,' ');
   const headerPos=lines.findIndex(s=>/NR\.?\s*CLI/i.test(s)&&/VEND/i.test(s));
   const header=headerPos>=0?lines.slice(headerPos+1,headerPos+4).join(' '):'';
@@ -1472,13 +1472,18 @@ function parseInvoiceText(text){
   const date=(header.match(/\b\d{4}-\d{2}-\d{2}\b/)||[''])[0];
   const seller=(header.match(/\b\d{9}\s+([A-Z0-9]+)\b/i)||[])[1]||'';
   const n='(-?[\\d.]+,\\d+)';
-  const re=new RegExp('^([A-Z0-9][A-Z0-9._/\\-]+)\\s+(.+?)\\s+'+n+'\\s+'+n+'\\s+(?:'+n+'\\s+)?'+n+'\\s+'+n+'(?:\\s+[A-Z]+)?$','i');
-  const items=[];
+  // Colunas: artigo, descrição, quantidade, preço, desconto opcional, IVA, valor e lote opcional (ex.: C25).
+  const re=new RegExp('^([A-Z0-9][A-Z0-9._/\\-]+)\\s+(.+?)\\s+'+n+'\\s+'+n+'\\s+(?:'+n+'\\s+)?'+n+'\\s+'+n+'(?:\\s+[A-Z0-9._/-]+)?$','i');
+  const items=[],seen=new Set();
   for(const line of lines){
     const m=line.match(re);if(!m)continue;
     const rate=invoiceNumber(m[6]);
-    if(!Number.isFinite(rate)||rate<0||rate>100)continue;
-    items.push({CLIENTES:client,CONTRIBUINTE:nif,DATA:date,'DATA VENDA':date,VENDEDOR:seller,ARTIGO:m[1],'DESCRIÇAO':m[2],QUANTIDADE:invoiceNumber(m[3]),'VALOR LIQUIDO':invoiceNumber(m[7]),IVA_FATURA:rate,PCUSTO:'',SEMANA:'',FORNECEDOR:'',TECNICO:'',DISTRITO:'','GRUPO DE CLIENTE':'',ASSOCIADO:'','AREA DE NEGOCIO':'',GRUPO:'',FAMILIAS:'',SUBFAMILIAS:''});
+    const qty=invoiceNumber(m[3]),net=invoiceNumber(m[7]);
+    if(!Number.isFinite(rate)||rate<0||rate>100||!Number.isFinite(qty)||!Number.isFinite(net))continue;
+    const key=[m[1],m[2],qty,net].join('|').toUpperCase();
+    if(seen.has(key))continue; // original e duplicado do mesmo documento
+    seen.add(key);
+    items.push({CLIENTES:client,CONTRIBUINTE:nif,DATA:date,'DATA VENDA':date,VENDEDOR:seller,ARTIGO:m[1],'DESCRIÇAO':m[2],QUANTIDADE:qty,'VALOR LIQUIDO':net,IVA_FATURA:rate,PCUSTO:'',SEMANA:'',FORNECEDOR:'',TECNICO:'',DISTRITO:'','GRUPO DE CLIENTE':'',ASSOCIADO:'','AREA DE NEGOCIO':'',GRUPO:'',FAMILIAS:'',SUBFAMILIAS:''});
   }
   const amount=label=>{const m=text.match(new RegExp(label+'\\s+([\\d.]+,\\d{2})','i'));return m?invoiceNumber(m[1]):null};
   return {number,client,nif,date,items,net:amount('Total L[ií]quido'),vat:amount('Total Iva'),total:amount('TOTAL\\s+EUR')};
