@@ -344,7 +344,7 @@ function resumoConformidade(){
 // é calculada a partir de PVenda/Valor Líquido e PCUSTO.
 
 // Em modo de edição, apenas estes campos podem ser alterados.
-const EDITABLE_FIELDS=new Set(['FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','GRUPO DE CLIENTE','ASSOCIADO']);
+const EDITABLE_FIELDS=new Set(['CONTRIBUINTE','FORNECEDOR','TECNICO','VENDEDOR','PCUSTO','DISTRITO','DATA VENDA','SEMANA','AREA DE NEGOCIO','GRUPO','FAMILIAS','SUBFAMILIAS','GRUPO DE CLIENTE','ASSOCIADO']);
 
 function today(){return new Date().toISOString().slice(0,10)}
 function label(x){return x.replaceAll('_',' ')}
@@ -1393,6 +1393,7 @@ document.getElementById('save').onclick=async()=>{
     const iva=stored?.fatura_taxa!=null?Math.round(liquido*Number(stored.fatura_taxa))/100:(document.getElementById('spainNoVat').checked ? 0 : liquido*0.23);
     const c=calculated();
     payload={
+      nif:val('CONTRIBUINTE').trim()||null,
       Fornecedor:val('FORNECEDOR').trim()||null,
       tecnico:val('TECNICO').trim()||null,
       'Grupo de Cliente':val('GRUPO DE CLIENTE').trim()||null,
